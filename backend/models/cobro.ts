@@ -37,6 +37,19 @@ export const getCobroById = async (cobro_id: number): Promise<Cobro | null> => {
   return result.rows[0] || null;
 };
 
+//obtener cobros por prestamo ID
+export const getCobrosByPrestamoId = async (prestamo_id: number): Promise<Cobro[]|any> => {
+  const result = await db.query
+  (`SELECT fecha_cobro, 
+    monto_cobrado, 
+    estado
+    FROM cobros 
+    WHERE prestamo_id = $1
+    order by fecha_cobro asc`,
+     [prestamo_id]);
+  return result.rows || null;
+};
+
 // Actualizar un cobro
 export const updateCobro = async (cobro_id: number, cobro: Cobro): Promise<Cobro | null> => {
   const result = await db.query(
@@ -63,6 +76,7 @@ export default {
   createCobro,
   getAllCobros,
   getCobroById,
+  getCobrosByPrestamoId,
   updateCobro,
   deleteCobro,
 };

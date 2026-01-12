@@ -1,5 +1,6 @@
 import prestamo from "../models/prestamo";
 import cliente from "../models/cliente";
+import cobro from "../models/cobro";
 import Tipoprestamo from "../models/TipoPrestamo";
 import { Request, Response } from "express";
 
@@ -80,6 +81,37 @@ if (!existeCliente){
   }
 };
 
+//obtener informacion de prestamos y cobros
+export const getPrestamoAndCobrosInfo = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    
+
+    const idPrestamo = parseInt(req.params.prestamo_id);
+    const prestamoInfo = await prestamo.getPrestamoById(idPrestamo);
+    if (!prestamoInfo) {
+      return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+
+    const prestamosCobrosInfo={
+      id_prestamo: prestamoInfo.prestamo_id,
+      nombre_cliente:prestamoInfo.cliente,
+      saldo_pendiente:prestamoInfo.saldo_pendiente,
+      valor_cuota:prestamoInfo.valor_cuota,
+      fecha_fin_prestamo:prestamoInfo.fecha_fin_prestamo,
+      data:[]
+    };
+
+    const cobros = await cobro.getCobrosByPrestamoId(idPrestamo);
+    if (cobros && cobros.length > 0) {
+      prestamosCobrosInfo.data = cobros;
+    }
+
+    return res.status(200).json(prestamosCobrosInfo);
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al obtener la información del préstamo y cobros' });
+  }
+};
+
 // Actualizar un préstamo   
 export const updatePrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -115,4 +147,5 @@ export default {
   getPrestamosByClienteId,
   updatePrestamo,
   deletePrestamo,
+  getPrestamoAndCobrosInfo,
 };

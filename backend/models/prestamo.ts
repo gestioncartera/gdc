@@ -51,15 +51,24 @@ export const getAllPrestamos = async (): Promise<Prestamo[]> => {
 };
 
 // Obtener un préstamo por ID
-export const getPrestamoById = async (prestamo_id: number): Promise<Prestamo | null> => {
-  const result = await db.query(`SELECT * FROM prestamos WHERE prestamo_id = $1`, [prestamo_id]);
+export const getPrestamoById = async (prestamo_id: number): Promise<Prestamo | any> => {
+  const result = await db.query
+  (`SELECT prestamos.prestamo_id,
+    clientes.nombres||' '||clientes.apellidos AS cliente ,
+    prestamos.saldo_pendiente,
+    prestamos.valor_cuota,
+    prestamos.fecha_fin_prestamo
+    FROM  clientes
+    inner join prestamos on clientes.cliente_id=prestamos.cliente_id
+    WHERE prestamo_id = $1`, 
+  [prestamo_id]);
   return result.rows[0] || null;
 };
 
 //obtener prestamos por cliente
 export const getPrestamosByClienteId = async (cliente_id: number): Promise<Prestamo[]|any[]> => {
   const result = await db.query
-  (`SELECT prestamos.prestamo_id,
+  (`SELECT 
     clientes.nombres||' '||clientes.apellidos AS cliente ,
     prestamos.saldo_pendiente,
     prestamos.valor_cuota,
