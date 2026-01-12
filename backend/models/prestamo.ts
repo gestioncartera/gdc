@@ -68,7 +68,7 @@ export const getPrestamoById = async (prestamo_id: number): Promise<Prestamo | a
 //obtener prestamos por cliente
 export const getPrestamosByClienteId = async (cliente_id: number): Promise<Prestamo[]|any[]> => {
   const result = await db.query
-  (`SELECT 
+  (`SELECT  prestamos.prestamo_id,
     clientes.nombres||' '||clientes.apellidos AS cliente ,
     prestamos.saldo_pendiente,
     prestamos.valor_cuota,

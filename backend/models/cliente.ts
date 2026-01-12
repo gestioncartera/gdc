@@ -64,17 +64,17 @@ export async function getClientesByRuta(id_ruta: number): Promise<Cliente[]> {
   return result.rows;
 }
 //
-// 
+//     case when prestamos.prestamo_id is null then 'Cliente no tiene prestamos activos' else lpad(cast(prestamos.prestamo_id as text), 8, '0' ) end AS idPrestamo, 
 //listar clientes por ruta con idUsuario
 export async function getClientesByUser(id_usuario: number): Promise<Cliente[]|any[]> {
-  const result = await db.query(`SELECT clientes.Nombres ||' '||  clientes.Apellidos AS nombreCliente,
-    case when prestamos.prestamo_id is null then 'Cliente no tiene prestamos activos' else lpad(cast(prestamos.prestamo_id as text), 8, '0' ) end AS idPrestamo, 
+  const result = await db.query(`SELECT distinct clientes.cliente_id,
+     clientes.Nombres ||' '||  clientes.Apellidos AS nombreCliente,
     clientes.direccion AS direccionCliente,
     clientes.telefono AS telefonoCliente
     FROM asignaciones_rutas ar
     inner JOIN rutas ON ar.ruta_id = rutas.ruta_id
     inner JOIN clientes  ON rutas.ruta_id = clientes.id_ruta
-    inner join prestamos on clientes.cliente_id = prestamos.cliente_id
+    inner join prestamos on clientes.cliente_id = prestamos.cliente_id and prestamos.estado_prestamo='en curso'
     WHERE ar.usuario_id = $1 and ar.estado = 'activa' `,
     [id_usuario]);
  
