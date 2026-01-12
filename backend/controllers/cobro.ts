@@ -1,9 +1,30 @@
 import cobro from "../models/cobro";
+import prestamo from "../models/prestamo";
+import usuario from "../models/usuario";
 import { Request, Response } from "express";
+
 
 // Crear un nuevo cobro
 export const createCobro = async (req: Request, res: Response): Promise<Response> => {
   try {
+    //validar si el prestamo existe
+    const prestamoExistente = await prestamo.getPrestamoById(req.body.prestamo_id);
+    if (!prestamoExistente) {
+      return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+
+    //validar que el cobrador exista
+    const cobradorExistente = await usuario.getUsuarioById(req.body.usuario_id);
+    if (!cobradorExistente) {
+      return res.status(404).json({ error: 'Cobrador no encontrado' });
+    }
+
+    //Validar que el cobrador sea el asignado a la ruta del cliente del prestamo
+    const cobradorPrestamo= await prestamo.getCobradorByPrestamoId(req.body.prestamo_id);
+if(cobradorPrestamo!==req.body.usuario_id){
+  return res.status(400).json({ error: 'El usuario no es el cobrador asignado para este préstamo' });
+}
+
     const newCobro = await cobro.createCobro(req.body);
     return (!newCobro) 
     ? res.status(400).send({ error: 'No se pudo crear el cobro' }) 

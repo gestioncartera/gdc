@@ -81,6 +81,21 @@ export const getPrestamosByClienteId = async (cliente_id: number): Promise<Prest
   return result.rows;
 };
 
+//Obtener el Cobrador responsable de un préstamo y sus cobros
+
+export const getCobradorByPrestamoId = async (prestamo_id: number): Promise<any> => {
+  const result = await db.query
+  (`SELECT
+    ar.usuario_id,  
+    FROM prestamos
+    inner join clientes ON prestamos.cliente_id = clientes.cliente_id
+    INNER JOIN asignaciones_rutas ar ON clientes.id_ruta = ar.ruta_id
+    WHERE prestamos.prestamo_id = $1 AND ar.estado = 'activa'`,
+    [prestamo_id]
+  );
+  return result.rows[0] || null;
+};
+
 // Actualizar un préstamo
 export const updatePrestamo = async (prestamo_id: number, prestamo: Prestamo): Promise<Prestamo | null> => {
   const result = await db.query(
@@ -110,6 +125,7 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   getAllPrestamos,
   getPrestamoById,
   getPrestamosByClienteId,
+  getCobradorByPrestamoId,
   updatePrestamo,
   deletePrestamo,
 };
