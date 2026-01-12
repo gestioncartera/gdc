@@ -1,4 +1,5 @@
 import prestamo from "../models/prestamo";
+import cliente from "../models/cliente";
 import Tipoprestamo from "../models/TipoPrestamo";
 import { Request, Response } from "express";
 
@@ -58,6 +59,27 @@ export const getPrestamoById = async (req: Request, res: Response): Promise<Resp
   }
 };
 
+//obtener prestamos por cliente
+export const getPrestamosByClienteId = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const cliente_id = parseInt(req.params.cliente_id);
+//validar cliente 
+const existeCliente= await cliente.getClienteById(cliente_id);
+if (!existeCliente){
+  return  res.status(404).json({ error: 'Cliente no existe' });
+}
+
+    const prestamosByCliente = await prestamo.getPrestamosByClienteId(cliente_id);
+    if (!prestamosByCliente || prestamosByCliente.length === 0) {
+      return res.status(404).json({ error: 'No se encontraron préstamos para el cliente especificado' });
+    }
+    return res.status(200).json(prestamosByCliente);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Error al obtener los préstamos del cliente' });
+  }
+};
+
 // Actualizar un préstamo   
 export const updatePrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -90,6 +112,7 @@ export default {
   createPrestamo,
   getAllPrestamos,
   getPrestamoById,
+  getPrestamosByClienteId,
   updatePrestamo,
   deletePrestamo,
 };

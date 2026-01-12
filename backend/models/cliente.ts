@@ -74,7 +74,7 @@ export async function getClientesByUser(id_usuario: number): Promise<Cliente[]|a
     FROM asignaciones_rutas ar
     inner JOIN rutas ON ar.ruta_id = rutas.ruta_id
     inner JOIN clientes  ON rutas.ruta_id = clientes.id_ruta
-    left join prestamos on clientes.cliente_id = prestamos.cliente_id
+    inner join prestamos on clientes.cliente_id = prestamos.cliente_id
     WHERE ar.usuario_id = $1 and ar.estado = 'activa' `,
     [id_usuario]);
  

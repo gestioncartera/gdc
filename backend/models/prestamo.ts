@@ -13,6 +13,7 @@ export interface Prestamo {
   tipo_prestamo_id: number;
   valor_intereses: number;
   valor_cuota?: number;
+  fecha_fin_prestamo?: Date;
 }
 
 export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo| null> => {
@@ -55,6 +56,22 @@ export const getPrestamoById = async (prestamo_id: number): Promise<Prestamo | n
   return result.rows[0] || null;
 };
 
+//obtener prestamos por cliente
+export const getPrestamosByClienteId = async (cliente_id: number): Promise<Prestamo[]|any[]> => {
+  const result = await db.query
+  (`SELECT prestamos.prestamo_id,
+    clientes.nombres||' '||clientes.apellidos AS cliente ,
+    prestamos.saldo_pendiente,
+    prestamos.valor_cuota,
+    prestamos.fecha_fin_prestamo
+    FROM  clientes
+    inner join prestamos on clientes.cliente_id=prestamos.cliente_id
+    WHERE clientes.cliente_id = $1`, 
+    [cliente_id]
+  );
+  return result.rows;
+};
+
 // Actualizar un préstamo
 export const updatePrestamo = async (prestamo_id: number, prestamo: Prestamo): Promise<Prestamo | null> => {
   const result = await db.query(
@@ -83,6 +100,7 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   createPrestamo,
   getAllPrestamos,
   getPrestamoById,
+  getPrestamosByClienteId,
   updatePrestamo,
   deletePrestamo,
 };
