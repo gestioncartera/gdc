@@ -86,7 +86,7 @@ export const getPrestamosByClienteId = async (cliente_id: number): Promise<Prest
 export const getCobradorByPrestamoId = async (prestamo_id: number): Promise<any> => {
   const result = await db.query
   (`SELECT
-    ar.usuario_id,  
+    ar.usuario_id  
     FROM prestamos
     inner join clientes ON prestamos.cliente_id = clientes.cliente_id
     INNER JOIN asignaciones_rutas ar ON clientes.id_ruta = ar.ruta_id
