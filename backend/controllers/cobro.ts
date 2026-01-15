@@ -1,6 +1,7 @@
 import cobro from "../models/cobro";
 import prestamo from "../models/prestamo";
 import usuario from "../models/usuario";
+import ruta from "../models/ruta";
 import { Request, Response } from "express";
 
 
@@ -63,6 +64,27 @@ export const getCobroById = async (req: Request, res: Response): Promise<Respons
   } 
 };
 
+//Obtener cobros por ruta ID
+export const getCobrosByRutaId = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const ruta_id = parseInt(req.params.ruta_id);
+    //validar si existe la ruta
+    const existeRuta = await ruta.getRutaById(ruta_id);
+    if (!existeRuta) {
+      return res.status(404).json({ error: 'Ruta no encontrada' });
+    }
+
+    
+    const cobrosByRutaId = await cobro.getCobrosByRutaId(ruta_id);
+    if (!cobrosByRutaId) {
+      return res.status(404).json({ error: 'No se encontraron cobros para la ruta especificada' });
+    }
+    return res.status(200).json(cobrosByRutaId);
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al obtener los cobros por ruta' });
+  }
+};
+
 // Actualizar un cobro
 export const updateCobro = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -95,6 +117,7 @@ export default {
   createCobro,
   getAllCobros,
   getCobroById,
+  getCobrosByRutaId,
   updateCobro,
   deleteCobro,
 };

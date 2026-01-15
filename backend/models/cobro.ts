@@ -37,6 +37,28 @@ export const getCobroById = async (cobro_id: number): Promise<Cobro | null> => {
   return result.rows[0] || null;
 };
 
+//obtener cobros por ruta ID
+export const getCobrosByRutaId = async (ruta_id: number): Promise<Cobro[]|any> => {
+  const result = await db.query
+  (`SELECT c.cobro_id,
+    p.prestamo_id,
+    cl.nombres ||' '|| cl.apellidos AS cliente_nombre,
+   u.usuario_id,
+   c.fecha_cobro,
+    c.monto_cobrado,
+    c.estado
+    FROM asignaciones_rutas ar
+    inner join usuarios u on ar.usuario_id = u.usuario_id
+    inner join cobros c on u.usuario_id = c.usuario_id and c.estado='pendiente'
+    inner join prestamos p on c.prestamo_id = p.prestamo_id
+    inner join clientes cl on p.cliente_id = cl.cliente_id
+    WHERE ar.ruta_id = $1 and ar.estado='activo'
+    order by cl.cliente_id,c.fecha_cobro desc`,
+     [ruta_id]);
+  return result.rows || null;
+};
+
+
 //obtener cobros por prestamo ID
 export const getCobrosByPrestamoId = async (prestamo_id: number): Promise<Cobro[]|any> => {
   const result = await db.query
@@ -45,7 +67,7 @@ export const getCobrosByPrestamoId = async (prestamo_id: number): Promise<Cobro[
     estado
     FROM cobros 
     WHERE prestamo_id = $1
-    order by fecha_cobro asc`,
+    order by fecha_cobro desc`,
      [prestamo_id]);
   return result.rows || null;
 };
@@ -77,6 +99,7 @@ export default {
   getAllCobros,
   getCobroById,
   getCobrosByPrestamoId,
+  getCobrosByRutaId,
   updateCobro,
   deleteCobro,
 };

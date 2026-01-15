@@ -19,7 +19,7 @@ export const createAsignacionRuta = async (asignacionRuta: AsignacionRuta): Prom
       asignacionRuta.usuario_id,
       asignacionRuta.fecha_asignacion || new Date().toISOString().slice(0, 10),
       asignacionRuta.fecha_fin || null,
-      asignacionRuta.estado || 'activa'
+      asignacionRuta.estado || 'activo'
       //asignacionRuta.created_at || new Date().toISOString().slice(0, 10),
     ]
   );
@@ -51,7 +51,7 @@ export const updateAsignacionRuta = async (id: number, asignacionRuta: Asignacio
       asignacionRuta.usuario_id,
       asignacionRuta.fecha_asignacion || new Date(),
       asignacionRuta.fecha_fin || null,
-      asignacionRuta.estado || 'activa',
+      asignacionRuta.estado || 'activo',
       id
     ]
   );
@@ -63,7 +63,7 @@ export const isRutaAsignada = async (ruta_id: number, usuario_id: number): Promi
 // console.log("entro a models",ruta_id,usuario_id);
   const result = await db.query(
     'SELECT * FROM asignaciones_rutas WHERE ruta_id = $1 AND usuario_id = $2 AND estado = $3',
-    [ruta_id, usuario_id, 'activa']
+    [ruta_id, usuario_id, 'activo']
   );
 
 
@@ -74,7 +74,7 @@ export const isRutaAsignada = async (ruta_id: number, usuario_id: number): Promi
 export const desactivarAsignacionRuta = async (idUsuario: number,idRuta:number): Promise<AsignacionRuta | null> => {
   const desactivatedAsignacionRuta = await db.query(
     'UPDATE asignaciones_rutas SET estado = $1, fecha_fin=$4 WHERE usuario_id = $2 or ruta_id = $3 RETURNING *',
-    ['inactiva', 
+    ['inactivo', 
       idUsuario,
       idRuta, 
       new Date().toISOString().slice(0, 10)]
