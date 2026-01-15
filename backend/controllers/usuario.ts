@@ -91,11 +91,36 @@ export const deleteUsuario = async (req: Request, res: Response) => {
   }
 };
 
+//Login usuario
+export const login = async (req: Request, res: Response) => {
+  try {
+//validar datos
+    if (!req.body.email || !req.body.password ||
+      req.body.email.trim() === '' || req.body.password.trim() === '') {
+      return res.status(400).send({ error: 'Faltan datos obligatorios' });
+    }
+
+    const usuarioEncontrado = await usuario.getUsuarioByEmail(req.body.email);
+    if (!usuarioEncontrado || usuarioEncontrado.password !== req.body.password) {
+      return res.status(401).send({ error: 'Credenciales inválidas' });
+    }
+
+    return (usuarioEncontrado.password !== req.body.password) 
+      ? res.status(401).send({ error: 'Credenciales inválidas' })
+      : res.status(200).json(usuarioEncontrado);
+  } catch (error) {
+    res.status(500).send({ error: 'Error al iniciar sesión' });
+  }
+};
+    
+
+
 export default {
   createUsuario,
   getUsuarios,
     getUsuarioById,
     getUsuarioByDNI,
     updateUsuario,
-    deleteUsuario
+    deleteUsuario,
+    login
 };

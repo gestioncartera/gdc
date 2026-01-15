@@ -7,6 +7,7 @@ router.post('/createUsuario', usuario.createUsuario);
 router.get('/getUsuarios', usuario.getUsuarios);
 router.get('/getUsuarioById/:id', usuario.getUsuarioById);
 router.get('/getUsuarioByDNI/:dni', usuario.getUsuarioByDNI);
+router.post('/login', usuario.login);
 router.put('/updateUsuario/:id', usuario.updateUsuario);
 router.delete('/deleteUsuario/:id', usuario.deleteUsuario);
 

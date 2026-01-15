@@ -21,8 +21,8 @@ export const createCobro = async (req: Request, res: Response): Promise<Response
 
     //Validar que el cobrador sea el asignado a la ruta del cliente del prestamo
     const cobradorPrestamo= await prestamo.getCobradorByPrestamoId(req.body.prestamo_id);
-    //console.log('Cobrador asignado al préstamo:', cobradorPrestamo);
-if(cobradorPrestamo!==req.body.usuario_id){
+    //console.log('Cobrador asignado al préstamo:', cobradorPrestamo,req.body.usuario_id);
+if(cobradorPrestamo.usuario_id!==req.body.usuario_id){
   return res.status(400).json({ error: 'El usuario no es el cobrador asignado para este préstamo' });
 }
 

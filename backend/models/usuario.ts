@@ -8,17 +8,18 @@ export interface Usuario {
   apellidos: string;
   dni: string;
   telefono?: string;
-  email?: string;
+  email: string;
   tipo_usuario: number; // Foreign key to TipoUsuario
   estado?: string; 
   created_at?: Date;
+  password: string;
 }
 
 //crear usuario
 export const createUsuario = async (usuario: Usuario): Promise<Usuario|null> => {
   const newUsuario =
   await db.query(
-    'INSERT INTO usuarios (sucursal_id, nombres, apellidos, dni, telefono, email, tipo_usuario, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+    'INSERT INTO usuarios (sucursal_id, nombres, apellidos, dni, telefono, email, tipo_usuario, estado, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 ) RETURNING *',
     [
       usuario.sucursal_id,
       usuario.nombres,
@@ -27,7 +28,9 @@ export const createUsuario = async (usuario: Usuario): Promise<Usuario|null> => 
       usuario.telefono || null,
       usuario.email || null,
       usuario.tipo_usuario,
-      usuario.estado||'activo'
+      usuario.estado||'activo',
+      usuario.password
+
 
     ]
   );
@@ -85,11 +88,22 @@ export const deleteUsuario = async (id: number): Promise<Usuario | null > => {
   return deletedUsuario.rows[0] || null;
 }
 
+//obtener usuario por correo
+export const getUsuarioByEmail = async (email: string): Promise<Usuario | null> => {
+  const result = await db.query('SELECT * FROM usuarios WHERE email = $1',
+    [
+      email
+    ]);
+  return result.rows[0] || null;
+}
+
+
 export default {
   createUsuario,
   getUsuarios,
   getUsuarioById,
   getUsuarioByDNI,
+  getUsuarioByEmail,
   updateUsuario,
   deleteUsuario
 };
