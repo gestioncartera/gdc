@@ -32,7 +32,7 @@ if(cobradorPrestamo.usuario_id!==req.body.usuario_id){
     ? res.status(400).send({ error: 'No se pudo crear el cobro' }) 
     : res.status(201).json(newCobro);
   } catch (error) {
-    
+  
     return res.status(500).json({ error: 'Error al crear el cobro' });
   }
 };

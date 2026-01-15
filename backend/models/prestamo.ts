@@ -90,7 +90,7 @@ export const getCobradorByPrestamoId = async (prestamo_id: number): Promise<any>
     FROM prestamos
     inner join clientes ON prestamos.cliente_id = clientes.cliente_id
     INNER JOIN asignaciones_rutas ar ON clientes.id_ruta = ar.ruta_id
-    WHERE prestamos.prestamo_id = $1 AND ar.estado = 'activa'`,
+    WHERE prestamos.prestamo_id = $1 AND ar.estado = 'activo'`,
     [prestamo_id]
   );
   return result.rows[0] || null;
