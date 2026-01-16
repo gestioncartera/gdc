@@ -31,8 +31,17 @@ export async function createRuta(ruta: Ruta): Promise<Ruta|null> {
 
 
 // Obtener todas las rutas
-export async function getRutas(): Promise<Ruta[]> {
-  const result = await db.query('SELECT * FROM rutas');
+export async function getRutas(): Promise<Ruta[]|any[] > {
+  const result = await db.query
+  (`SELECT 
+    r.*,
+    COALESCE(u.nombres || ' ' || u.apellidos, 'No asignado') AS cobrador
+FROM public.rutas r
+LEFT JOIN public.asignaciones_rutas ar  ON r.ruta_id = ar.ruta_id AND ar.estado = 'activo'
+LEFT JOIN public.usuarios u  ON ar.usuario_id = u.usuario_id
+    `
+
+  );
   return result.rows;
 }
 
