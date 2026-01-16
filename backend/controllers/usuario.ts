@@ -1,17 +1,23 @@
 import  usuario  from "../models/usuario";
 import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 
 //crear usuario
 export const createUsuario = async (req: Request, res: Response) => {
   try {
     if (!req.body.sucursal_id || !req.body.nombres || !req.body.apellidos || !req.body.dni || !req.body.tipo_usuario ||
-      req.body.nombres.trim() === '' || req.body.apellidos.trim() === '' || req.body.dni.trim() === '') {
+      req.body.nombres.trim() === '' || req.body.apellidos.trim() === '' || req.body.dni.trim() === '' || !req.body.email || !req.body.password) {
       return res.status(400).send({ error: 'Faltan datos obligatorios' });
     }
     const existeUsuario = await usuario.getUsuarioByDNI(req.body.dni);
     if (existeUsuario) {
       return res.status(409).send({ error: 'Ya existe un usuario con ese Numero de identificacion  ' });
     }
+  
+   // Encriptar contraseña
+   const salt = await bcrypt.genSalt(10);
+   req.body.password = await bcrypt.hash(req.body.password, salt);
+
    const newUsuario= await usuario.createUsuario(req.body);
   return (!newUsuario )
     ? res.status(400).send({ error: 'El usuario no pudo ser creado' })
@@ -101,13 +107,17 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const usuarioEncontrado = await usuario.getUsuarioByEmail(req.body.email);
-    if (!usuarioEncontrado || usuarioEncontrado.password !== req.body.password) {
+    if (!usuarioEncontrado) {
       return res.status(401).send({ error: 'Credenciales inválidas' });
     }
 
-    return (usuarioEncontrado.password !== req.body.password) 
-      ? res.status(401).send({ error: 'Credenciales inválidas' })
-      : res.status(200).json(usuarioEncontrado);
+    const validPassword = await bcrypt.compare(req.body.password, usuarioEncontrado.password);
+
+    if (!validPassword) { 
+      return res.status(401).send({ error: 'Credenciales inválidas' });
+    }
+    
+    return res.status(200).json(usuarioEncontrado);
   } catch (error) {
     res.status(500).send({ error: 'Error al iniciar sesión' });
   }
