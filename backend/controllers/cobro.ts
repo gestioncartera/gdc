@@ -49,11 +49,26 @@ export const getAllCobros = async (req: Request, res: Response): Promise<Respons
     return res.status(500).json({ error: 'Error al obtener los cobros' });
   }
 };
+//obtener la informacion del cobro por ID
+export const getCobroInfoById = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const id = parseInt(req.params.cobro_id);
+    const cobroInfo = await cobro.getCobroInfoById(id);
+    if (!cobroInfo) {
+      return res.status(404).json({ error: 'Cobro no encontrado' });
+    }
+    return res.status(200).json(cobroInfo);
+  } catch (error) {
+    
+    return res.status(500).json({ error: 'Error al obtener la información del cobro' });
+  }
+};
+
 
 // Obtener un cobro por ID
 export const getCobroById = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.cobro_id);
     const cobroById = await cobro.getCobroById(id);
     if (!cobroById) {
       return res.status(404).json({ error: 'Cobro no encontrado' });
@@ -88,7 +103,7 @@ export const getCobrosByRutaId = async (req: Request, res: Response): Promise<Re
 // Actualizar un cobro
 export const updateCobro = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.cobro_id);
     const updatedCobro = await cobro.updateCobro(id, req.body);
     if (!updatedCobro) {
       return res.status(404).json({ error: 'Cobro no encontrado' });
@@ -102,7 +117,7 @@ export const updateCobro = async (req: Request, res: Response): Promise<Response
 // Eliminar un cobro
 export const deleteCobro = async (req: Request, res: Response): Promise<Response> => {
     try {   
-        const id = parseInt(req.params.id); 
+        const id = parseInt(req.params.cobro_id); 
         const deletedCobro = await cobro.deleteCobro(id);
         if (!deletedCobro) {
           return res.status(404).json({ error: 'Cobro no encontrado' });
@@ -118,6 +133,7 @@ export default {
   getAllCobros,
   getCobroById,
   getCobrosByRutaId,
+  getCobroInfoById,
   updateCobro,
   deleteCobro,
 };

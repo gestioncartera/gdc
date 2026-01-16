@@ -37,6 +37,25 @@ export const getCobroById = async (cobro_id: number): Promise<Cobro | null> => {
   return result.rows[0] || null;
 };
 
+//obtener la informacion del cobro por ID
+export const getCobroInfoById = async (cobro_id: number): Promise<Cobro | any> => {
+  const result = await db.query(`select c.cobro_id,
+      p.prestamo_id,
+      cl.cliente_id,
+      u.usuario_id,
+      c.fecha_cobro,
+      c.monto_cobrado,
+      c.estado
+FROM  usuarios u 
+    inner join cobros c on u.usuario_id = c.usuario_id and c.cobro_id=$1
+    inner join prestamos p on c.prestamo_id = p.prestamo_id
+    inner join clientes cl on p.cliente_id = cl.cliente_id`,
+     [cobro_id]
+    );
+    
+  return result.rows[0] || null;
+};
+
 //obtener cobros por ruta ID
 export const getCobrosByRutaId = async (ruta_id: number): Promise<Cobro[]|any> => {
   const result = await db.query
@@ -100,6 +119,7 @@ export default {
   getCobroById,
   getCobrosByPrestamoId,
   getCobrosByRutaId,
+  getCobroInfoById,
   updateCobro,
   deleteCobro,
 };

@@ -5,9 +5,10 @@ const router = express.Router();
 
 router.post('/createCobro', cobro.createCobro);
 router.get('/getAllCobros', cobro.getAllCobros);
-router.get('/getCobroById/:id', cobro.getCobroById);
+router.get('/getCobroById/:cobro_id', cobro.getCobroById);
 router.get('/getCobrosByRutaId/:ruta_id', cobro.getCobrosByRutaId);
-router.put('/updateCobro/:id', cobro.updateCobro);
-router.delete('/deleteCobro/:id', cobro.deleteCobro);
+router.get('/getCobroInfoById/:cobro_id', cobro.getCobroInfoById);
+router.put('/updateCobro/:cobro_id', cobro.updateCobro);
+router.delete('/deleteCobro/:cobro_id', cobro.deleteCobro);
 
 export default router;
