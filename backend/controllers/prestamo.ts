@@ -112,6 +112,19 @@ export const getPrestamoAndCobrosInfo = async (req: Request, res: Response): Pro
   }
 };
 
+//obtener prestamos con informacion de cliente
+export const getPrestamosInfo = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const prestamosInfo = await prestamo.getPrestamosInfo();
+    return (!prestamosInfo ) 
+    ? res.status(404).send({ error: 'No existen préstamos creados' }) 
+    : res.status(200).json(prestamosInfo);
+  } catch (error) {
+    //console.error(error);
+    return res.status(500).json({ error: 'Error al obtener los préstamos' });
+  }
+};
+
 // Actualizar un préstamo   
 export const updatePrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -145,6 +158,7 @@ export default {
   getAllPrestamos,
   getPrestamoById,
   getPrestamosByClienteId,
+  getPrestamosInfo,
   updatePrestamo,
   deletePrestamo,
   getPrestamoAndCobrosInfo,

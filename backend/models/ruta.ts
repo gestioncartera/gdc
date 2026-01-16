@@ -39,6 +39,7 @@ export async function getRutas(): Promise<Ruta[]|any[] > {
 FROM public.rutas r
 LEFT JOIN public.asignaciones_rutas ar  ON r.ruta_id = ar.ruta_id AND ar.estado = 'activo'
 LEFT JOIN public.usuarios u  ON ar.usuario_id = u.usuario_id
+order BY r.ruta_id ASC
     `
 
   );

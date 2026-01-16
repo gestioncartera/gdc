@@ -96,6 +96,19 @@ export const getCobradorByPrestamoId = async (prestamo_id: number): Promise<any>
   return result.rows[0] || null;
 };
 
+//Obtener prestamos con informacion
+export const getPrestamosInfo = async (): Promise<Prestamo[]|any[]> => {
+  const result = await db.query
+  (`SELECT  clientes.cliente_id,
+    clientes.nombres||' '||clientes.apellidos AS cliente ,
+     prestamos.*
+    FROM  clientes
+    inner join prestamos on clientes.cliente_id=prestamos.cliente_id
+    order by prestamos.prestamo_id asc`,
+  );
+  return result.rows;
+};
+
 // Actualizar un préstamo
 export const updatePrestamo = async (prestamo_id: number, prestamo: Prestamo): Promise<Prestamo | null> => {
   const result = await db.query(
@@ -126,6 +139,7 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   getPrestamoById,
   getPrestamosByClienteId,
   getCobradorByPrestamoId,
+  getPrestamosInfo,
   updatePrestamo,
   deletePrestamo,
 };
