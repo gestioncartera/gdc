@@ -79,6 +79,15 @@ export const updateUsuario = async (id: number, usuario: Partial<Usuario>): Prom
   return updatedUsuario.rows[0] || null;
 }
 
+//actualizar contraseña de usuario
+export const updatePassword = async (id: number, newPassword: string): Promise<Usuario | null> => {
+  const updatedUsuario = await db.query(
+    `UPDATE usuarios SET password = $1 WHERE usuario_id = $2 RETURNING *`,
+    [newPassword, id]
+  );
+  return updatedUsuario.rows[0] || null;
+}
+
 //eliminar usuario
 export const deleteUsuario = async (id: number): Promise<Usuario | null > => {
   const deletedUsuario = await db.query(
@@ -105,5 +114,6 @@ export default {
   getUsuarioByDNI,
   getUsuarioByEmail,
   updateUsuario,
+  updatePassword,
   deleteUsuario
 };

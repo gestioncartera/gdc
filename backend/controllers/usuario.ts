@@ -1,6 +1,7 @@
 import  usuario  from "../models/usuario";
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
+import { generarJWT } from '../helpers/generar-jwt';
 
 //crear usuario
 export const createUsuario = async (req: Request, res: Response) => {
@@ -82,6 +83,24 @@ export const updateUsuario = async (req: Request, res: Response) => {
   }
 };
 
+//Actualizar contraseña de usuario
+export const updatePassword = async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const existeUsuario = await usuario.getUsuarioById(id);
+    if (!existeUsuario) {
+      return res.status(404).send({ message: 'Usuario no encontrado' });
+    }
+    // Encriptar nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+    const updatedUsuario = await usuario.updatePassword(id, hashedPassword);
+    return res.status(200).send({ message: 'Contraseña actualizada exitosamente',updatedUsuario });
+  } catch (error) {
+    res.status(500).send({ error: 'Error al actualizar la contraseña' });
+  }
+};
+
 //eliminar usuario
 export const deleteUsuario = async (req: Request, res: Response) => {
   try {
@@ -117,7 +136,13 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).send({ error: 'Credenciales inválidas' });
     }
     
-    return res.status(200).json(usuarioEncontrado);
+    // Generar JWT
+    //se agrega el signo de exclamacion para indicar que el valor no es nulo ni indefinido
+    const token = await generarJWT(usuarioEncontrado.usuario_id!, usuarioEncontrado.email);
+
+    return res.status(200).json({
+      token
+    });
   } catch (error) {
     res.status(500).send({ error: 'Error al iniciar sesión' });
   }
@@ -132,5 +157,6 @@ export default {
     getUsuarioByDNI,
     updateUsuario,
     deleteUsuario,
-    login
+    login,
+    updatePassword
 };
