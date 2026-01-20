@@ -22,14 +22,20 @@ export const createPrestamo = async (req: Request, res: Response): Promise<Respo
     req.body.saldo_pendiente = req.body.monto_prestamo + req.body.valor_intereses;
     req.body.valor_cuota = (req.body.monto_prestamo + req.body.valor_intereses) / tipoPrestamo[0].cantidad_cuotas;
 
-
+    // Obtener fecha actual en Colombia para evitar desfase de zona horaria
+    const fechaActualStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+    const fechaInicio = new Date(fechaActualStr); // Crea fecha a las 00:00 UTC del día correcto
+    
+    // Calcular fecha fin usando la función sumarDiasHabiles
+    const fechaFin: Date = sumarDiasHabiles(fechaInicio, tipoPrestamo[0].cantidad_cuotas);
+    req.body.fecha_fin_prestamo = fechaFin.toISOString().split('T')[0];
 
     const newPrestamo = await prestamo.createPrestamo(req.body);
     return (!newPrestamo) 
     ? res.status(400).send({ error: 'No se pudo crear el préstamo' }) 
     :  res.status(201).send({message:"Préstamo creado exitosamente"});
   } catch (error) {
-   // console.error(error);
+   //console.error(error);
     return res.status(500).send({ error: 'Error al crear el préstamo' });
   }
 };
@@ -55,6 +61,20 @@ export const getPrestamoById = async (req: Request, res: Response): Promise<Resp
       return res.status(404).json({ error: 'Préstamo no encontrado' });
     }
     return res.status(200).json(prestamoById);
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al obtener el préstamo' });
+  }
+};
+
+//Obtener toda informacion de prestamo por id
+export const getPrestamoInfoById = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const id = parseInt(req.params.prestamo_id);
+    const prestamoInfo = await prestamo.getPrestamoInfoById(id);
+    if (!prestamoInfo) {
+      return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+    return res.status(200).json(prestamoInfo);
   } catch (error) {
     return res.status(500).json({ error: 'Error al obtener el préstamo' });
   }
@@ -153,12 +173,32 @@ export const deletePrestamo = async (req: Request, res: Response): Promise<Respo
     }
 };
 
+
+// Función para sumar días hábiles a una fecha de prestamo
+function sumarDiasHabiles(fechaInicio: Date, diasParaSumar: number): Date {
+  const fecha = new Date(fechaInicio);
+  let diasSumados = 0;
+
+  while (diasSumados < (diasParaSumar+1)) { // +1 para incluir el día de inicio
+    // Avanzar un día
+    fecha.setDate(fecha.getDate() + 1);
+
+    // 0 = Domingo. Si NO es domingo, contamos el día.
+    if (fecha.getDay() !== 0) {
+      diasSumados++;
+    }
+  }
+
+  return fecha;
+}
+
 export default {
   createPrestamo,
   getAllPrestamos,
   getPrestamoById,
   getPrestamosByClienteId,
   getPrestamosInfo,
+  getPrestamoInfoById,
   updatePrestamo,
   deletePrestamo,
   getPrestamoAndCobrosInfo,

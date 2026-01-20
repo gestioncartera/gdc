@@ -8,6 +8,7 @@ router.get("/getAllPrestamos", prestamo.getAllPrestamos);
 router.get("/getPrestamoById/:id", prestamo.getPrestamoById);
 router.get("/getPrestamosByCliente/:cliente_id", prestamo.getPrestamosByClienteId);
 router.get("/getPrestamosInfo", prestamo.getPrestamosInfo);
+router.get("/getPrestamoInfoById/:prestamo_id", prestamo.getPrestamoInfoById);
 router.get("/prestamoCobros/:prestamo_id", prestamo.getPrestamoAndCobrosInfo);
 router.put("/updatePrestamo/:id", prestamo.updatePrestamo);
 router.delete("/deletePrestamo/:id", prestamo.deletePrestamo);

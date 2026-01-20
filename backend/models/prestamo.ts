@@ -27,18 +27,20 @@ export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo| null
                             created_at, 
                             tipo_prestamo_id, 
                             valor_intereses, 
-                            valor_cuota ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+                            valor_cuota,
+                            fecha_fin_prestamo ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
     [
       prestamo.cliente_id,
       prestamo.periodo_id,  
       prestamo.monto_prestamo,
-      prestamo.fecha_desembolso|| new Date().toISOString().slice(0, 10),
+      prestamo.fecha_desembolso||new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),// new Date().toISOString().slice(0, 10),
       prestamo.estado_prestamo||'en curso',
       prestamo.saldo_pendiente || prestamo.monto_prestamo,
-      prestamo.created_at || new Date().toISOString().slice(0, 10),
+      prestamo.created_at || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),//new Date().toISOString().slice(0, 10),
       prestamo.tipo_prestamo_id,
       prestamo.valor_intereses,
       prestamo.valor_cuota,
+      prestamo.fecha_fin_prestamo
     ]
   );
   return result.rows[0];
@@ -60,6 +62,16 @@ export const getPrestamoById = async (prestamo_id: number): Promise<Prestamo | a
     prestamos.fecha_fin_prestamo
     FROM  clientes
     inner join prestamos on clientes.cliente_id=prestamos.cliente_id
+    WHERE prestamo_id = $1`, 
+  [prestamo_id]);
+  return result.rows[0] || null;
+};
+
+//Obtener toda informacion de prestamo por id
+export const getPrestamoInfoById = async (prestamo_id: number): Promise<Prestamo | any> => {
+  const result = await db.query
+  (`SELECT prestamos.*
+    FROM  prestamos
     WHERE prestamo_id = $1`, 
   [prestamo_id]);
   return result.rows[0] || null;
@@ -140,8 +152,9 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   getPrestamosByClienteId,
   getCobradorByPrestamoId,
   getPrestamosInfo,
+  getPrestamoInfoById,
   updatePrestamo,
-  deletePrestamo,
+  deletePrestamo
 };
 
 

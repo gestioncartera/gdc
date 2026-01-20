@@ -118,11 +118,11 @@ const updateCliente = async (req: Request, res: Response) => {
             return res.status(400).send({ error: 'La ruta especificada no existe' });
         }
 
-        const id = parseInt(req.params.id);
-        const clienteActualizado = await cliente.updateCliente(id, req.body);
+    
+        const clienteActualizado = await cliente.updateCliente( req.body);
         return clienteActualizado===null
         ? res.status(404).send({ message: 'Cliente no encontrado o no se pudo actualizar' }) 
-        : res.status(200).json(clienteActualizado);
+        : res.status(200).send({message:'Cliente actualizado exitosamente'});
     } catch (error) {
         return res.status(500).send({ error: 'Error al actualizar el cliente' });
     }   
