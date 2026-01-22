@@ -1,4 +1,5 @@
 import db from "../db/db";
+import { Pool } from 'pg'; // Asumiendo que usas pg
 
 export interface Cobro {
   cobro_id?: number;
@@ -107,11 +108,93 @@ export const updateCobro = async (cobro_id: number, cobro: Cobro): Promise<Cobro
   return result.rows[0] || null;
 };
 
+//cambiar estado de un cobro a pagado
+export const validarCobro = async(cobro_id:number):Promise<Cobro|null>=>{
+  const result = await db.query(
+    `UPDATE cobros SET estado = $1 WHERE cobro_id = $1 RETURNING *`,
+    [
+      'confirmado',
+      cobro_id
+    ]
+  );
+  return result.rows[0] || null;
+};
+
 // Eliminar un cobro
 export const deleteCobro = async (cobro_id: number): Promise<Cobro | null> => {
   const result = await db.query(`DELETE FROM cobros WHERE cobro_id = $1 RETURNING *`, [cobro_id]);
   return result.rows[0] || null;
 };
+
+
+
+
+// Validar un cobro y actualizar el saldo del préstamo asociado
+
+
+export async function validarMultiplesCobros(cobroIds: number[]) {
+  const client = await db.connect(); 
+  const resultados = {
+    procesados: [] as number[],
+    errores: [] as { id: number, motivo: string }[]
+  };
+
+  try {
+    await client.query('BEGIN');
+
+    for (const cobroId of cobroIds) {
+      try {
+        await client.query(`SAVEPOINT sp_${cobroId}`); // Punto de guardado para aislar errores
+
+        // A. Validar Cobro
+        const resCobro = await client.query(
+          `UPDATE cobros 
+           SET estado = 'confirmado' 
+           WHERE cobro_id = $1 AND estado != 'confirmado' 
+           RETURNING *`,
+          [cobroId]
+        );
+
+        if (resCobro.rowCount === 0) {
+           await client.query(`ROLLBACK TO SAVEPOINT sp_${cobroId}`);
+           resultados.errores.push({ id: cobroId, motivo: 'Cobro no existe o ya validado' });
+           continue;
+        }
+
+        const cobro = resCobro.rows[0];
+
+        // B. Actualizar Préstamo
+        await client.query(
+          `UPDATE prestamos 
+           SET 
+             saldo_pendiente = saldo_pendiente - $1,
+             estado_prestamo = CASE 
+                                 WHEN (saldo_pendiente - $1) <= 0 THEN 'pagado' 
+                                 ELSE estado_prestamo 
+                               END
+           WHERE prestamo_id = $2`,
+          [cobro.monto_cobrado, cobro.prestamo_id]
+        );
+        
+        await client.query(`RELEASE SAVEPOINT sp_${cobroId}`); // Confirmar éxito parcial
+        resultados.procesados.push(cobroId);
+
+      } catch (err: any) {
+        await client.query(`ROLLBACK TO SAVEPOINT sp_${cobroId}`); // Deshacer cambios de ESTE cobro fallido
+        resultados.errores.push({ id: cobroId, motivo: err.message });
+      }
+    }
+
+    await client.query('COMMIT');
+    return resultados;
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
 export default {
   createCobro,
@@ -122,4 +205,6 @@ export default {
   getCobroInfoById,
   updateCobro,
   deleteCobro,
+  validarCobro,
+  validarMultiplesCobros
 };

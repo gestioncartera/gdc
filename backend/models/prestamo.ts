@@ -48,7 +48,7 @@ export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo| null
 
 // Obtener todos los préstamos
 export const getAllPrestamos = async (): Promise<Prestamo[]> => {
-  const result = await db.query(`SELECT * FROM prestamos`);
+  const result = await db.query(`SELECT * FROM prestamos order by prestamo_id asc`);
   return result.rows;
 };
 

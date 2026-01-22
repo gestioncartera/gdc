@@ -37,6 +37,31 @@ if(cobradorPrestamo.usuario_id!==req.body.usuario_id){
   }
 };
 
+//Validar cobros, cambiar estado de cobro y afectar saldo del prestamo
+export const validarCobro = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const id = parseInt(req.params.cobro_id);
+    
+   
+    const resultado = await cobro.validarMultiplesCobros([id]);
+
+    if (resultado.errores.length > 0) {
+       return res.status(400).json({ error: resultado.errores[0].motivo });
+    }
+
+    if (resultado.procesados.length === 0) {
+       return res.status(404).json({ error: 'Cobro no encontrado o no procesable' });
+    }
+    
+    // Retornamos el cobro actualizado para mantener compatibilidad con el frontend
+    const cobroActualizado = await cobro.getCobroById(id);
+    return res.status(200).json(cobroActualizado);
+
+  } catch (error) {
+    return res.status(500).json({ error: 'Error interno al validar el cobro' });
+  }
+};
+
 // Obtener todos los cobros
 export const getAllCobros = async (req: Request, res: Response): Promise<Response> => {
   try { 
@@ -128,6 +153,35 @@ export const deleteCobro = async (req: Request, res: Response): Promise<Response
     }
 };
 
+
+// Validar múltiples cobros a la vez (Batch Processing)
+export const validarMultiplesCobros = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { cobroIds } = req.body; // Espera un JSON { "cobroIds": [1, 2, 3] }
+
+    if (!Array.isArray(cobroIds) || cobroIds.length === 0) {
+      return res.status(400).json({ error: 'Se requiere un array de "cobroIds" no vacío.' });
+    }
+
+    const resultado = await cobro.validarMultiplesCobros(cobroIds);
+
+    // Respuesta con resumen de lo que pasó
+    return res.status(200).json({
+      message: 'Proceso de validación finalizado',
+      resumen: {
+        total_recibidos: cobroIds.length,
+        total_procesados: resultado.procesados.length,
+        total_errores: resultado.errores.length
+      },
+      detalles: resultado
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Error interno al procesar los cobros' });
+  }
+};
+
 export default {
   createCobro,
   getAllCobros,
@@ -136,4 +190,5 @@ export default {
   getCobroInfoById,
   updateCobro,
   deleteCobro,
+  validarMultiplesCobros
 };
