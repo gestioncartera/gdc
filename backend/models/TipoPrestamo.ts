@@ -14,7 +14,7 @@ export const createTipoPrestamo = async (tipoPrestamo: TipoPrestamo): Promise<Ti
     [
       tipoPrestamo.cantidad_cuotas,
       tipoPrestamo.porcentaje,
-      tipoPrestamo.nombre
+      tipoPrestamo.nombre ||'Prestamo '+ tipoPrestamo.cantidad_cuotas +'cuotas'
     ]
   );
   return newTipoPrestamo.rows[0] || null;
