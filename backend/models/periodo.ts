@@ -69,7 +69,15 @@ export async function getPeriodosBySucursal(sucursal_id: number): Promise<Period
 // Cerrar un periodo
 export async function closePeriodo(id: number): Promise<Periodo|null> {
   const closedPeriodo = await db.query( 
-    `UPDATE periodos SET estado='cerrado' WHERE periodo_id=$1 RETURNING *`,
+    `UPDATE periodos 
+     SET estado='cerrado' 
+     WHERE periodo_id=$1 
+     AND NOT EXISTS (
+        SELECT 1 FROM prestamos 
+        WHERE prestamos.periodo_id = periodos.periodo_id 
+        AND prestamos.estado_prestamo = 'en curso'
+     )
+     RETURNING *`,
     [           
         id
     ]

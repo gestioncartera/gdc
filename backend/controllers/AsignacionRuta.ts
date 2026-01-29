@@ -5,21 +5,17 @@ import { Request, Response } from "express";
 export const createAsignacionRuta = async (req: Request, res: Response): Promise<Response> => {
   try {
      
+    // Verificar si YA tienen exactamente esa asignación activa (pura lectura, rápido)
     const existeRutaAsignada = await AsignacionRuta.isRutaAsignada(req.body.ruta_id, req.body.usuario_id);
-   
     if (existeRutaAsignada) {
-      return res.status(400).json({ error: 'La ruta ya está asignada a este usuario' });
+       // Opción A: Devolver error o mensaje de que ya está lista
+      return res.status(400).json({ error: 'La ruta ya está asignada a este usuario correctamente' });
     }
 
-    //desactivar asignaciones previas del usuario y la ruta
-    const desactivarAsignacion = await AsignacionRuta.desactivarAsignacionRuta(req.body.usuario_id,req.body.ruta_id);
-    
+    // Usar la transacción segura del modelo para limpiar conflictos y crear
+    const newAsignacionRuta = await AsignacionRuta.asignarRutaSegura(req.body);
 
-    const asignacionRuta = req.body;
-    const newAsignacionRuta = await AsignacionRuta.createAsignacionRuta(asignacionRuta);
-    return (!newAsignacionRuta) 
-    ? res.status(500).send({ error: 'No se pudo crear la asignación de ruta' }) 
-    : res.status(201).json(newAsignacionRuta);
+    return res.status(201).json(newAsignacionRuta);
   } catch (error) {
     console.error(error);
     return res.status(500).send({ error: 'Error al crear la asignación de ruta' });

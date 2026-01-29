@@ -1,5 +1,6 @@
 import periodo from '../models/periodo';
 import sucursal from '../models/sucursal';
+import prestamo from '../models/prestamo';
 import { Request, Response } from 'express';  
 
 //obtener todos los periodos
@@ -90,10 +91,38 @@ const deletePeriodo = async (req: Request, res: Response) => {
         if (!existePeriodo) {
             return res.status(404).send({ message: 'Periodo no encontrado' });
         }
+
+        // Validar si tiene préstamos asociados
+        const cantidadPrestamos = await prestamo.countPrestamosByPeriodo(id);
+        if (cantidadPrestamos > 0) {
+            return res.status(400).send({ 
+                error: 'No se puede eliminar el periodo porque tiene préstamos asociados. Considere cerrarlo en su lugar.' 
+            });
+        }
+
         await periodo.deletePeriodo(id);
         return res.status(200).send({message: 'Periodo eliminado exitosamente' });
     } catch (error) {
+        
         res.status(500).send({ error: 'Error al eliminar el periodo' });
+    }
+};
+
+//Cerrar periodo
+const closePeriodo = async (req: Request, res: Response) => {
+    try {
+        const id = parseInt(req.params.id);
+        const periodoExistente = await periodo.getPeriodoById(id);
+        if (!periodoExistente) {
+            return res.status(404).send({ error: 'Periodo no encontrado' });
+        }
+
+        const periodoCerrado = await periodo.closePeriodo(id);
+        return periodoCerrado
+            ? res.status(200).send({ message: 'Periodo cerrado exitosamente' })
+            : res.status(400).send({ error: 'Error al cerrar el periodo tiene prestamos en curso' });
+    } catch (error) {
+        res.status(500).send({ error: 'Error al cerrar el periodo' });
     }
 };
 
@@ -102,5 +131,6 @@ export default {
   getPeriodosBySucursal,
   createPeriodo,
   updatePeriodo,
-  deletePeriodo
+  deletePeriodo,
+  closePeriodo
 };

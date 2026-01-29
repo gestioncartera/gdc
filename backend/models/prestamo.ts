@@ -145,6 +145,12 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   return result.rows[0] || null;
 };  
 
+// Contar préstamos por periodo
+export const countPrestamosByPeriodo = async (periodo_id: number): Promise<number> => {
+  const result = await db.query(`SELECT COUNT(*) FROM prestamos WHERE periodo_id = $1`, [periodo_id]);
+  return parseInt(result.rows[0].count);
+};
+
  export default{
   createPrestamo,
   getAllPrestamos,
@@ -154,7 +160,8 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   getPrestamosInfo,
   getPrestamoInfoById,
   updatePrestamo,
-  deletePrestamo
+  deletePrestamo,
+  countPrestamosByPeriodo
 };
 
 
