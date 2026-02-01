@@ -39,7 +39,7 @@ export const createUsuario = async (usuario: Usuario): Promise<Usuario|null> => 
 
 //obtener todos los usuarios
 export const getUsuarios = async (): Promise<Usuario[]> => {
-  const result = await db.query( `SELECT * FROM usuarios where tipo_usuario=2 and estado='activo'`); //solo cobradores
+  const result = await db.query( `SELECT * FROM usuarios `); //solo cobradores
   return result.rows;
 }
 

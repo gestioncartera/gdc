@@ -7,35 +7,38 @@ import { Request, Response } from "express";
 // Crear un nuevo préstamo
 export const createPrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    //validar los datos de entrada aquí si es necesario
-    if (!req.body.cliente_id || !req.body.periodo_id || !req.body.monto_prestamo || !req.body.tipo_prestamo_id || !req.body.valor_intereses) {
+    // 1. Validar solo lo necesario (quitamos valor_intereses porque lo calculamos nosotros)
+    if (!req.body.cliente_id || !req.body.periodo_id || !req.body.monto_prestamo || !req.body.tipo_prestamo_id) {
       return res.status(400).json({ error: 'Faltan datos obligatorios para crear el préstamo' });
     }
 
-    //validar que el tipo de préstamo exista
+    // 2. Validar que el cliente exista (Buenas prácticas)
+    const existeCliente = await cliente.getClienteById(req.body.cliente_id);
+    if (!existeCliente) {
+      return res.status(404).json({ error: 'El cliente especificado no existe' });
+    }
+
+    // 3. Validar tipo de préstamo
     const tipoPrestamo = await Tipoprestamo.getTipoPrestamoById(req.body.tipo_prestamo_id);
     if (!tipoPrestamo || tipoPrestamo.length === 0) {
       return res.status(400).send({ error: 'El tipo de préstamo especificado no existe' });
     }
 
-    req.body.valor_intereses = req.body.monto_prestamo * (tipoPrestamo[0].porcentaje / 100);
-    req.body.saldo_pendiente = req.body.monto_prestamo + req.body.valor_intereses;
-    req.body.valor_cuota = (req.body.monto_prestamo + req.body.valor_intereses) / tipoPrestamo[0].cantidad_cuotas;
+    const tPrestamo = tipoPrestamo[0]; // Alias para simplificar lectura
 
-    // Obtener fecha actual en Colombia para evitar desfase de zona horaria
-    const fechaActualStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-    const fechaInicio = new Date(fechaActualStr); // Crea fecha a las 00:00 UTC del día correcto
+    // 4. Cálculos Financieros y Fechas (Usando Helper)
+    const calculos = calcularDetallesPrestamo(req.body.monto_prestamo, tPrestamo);
     
-    // Calcular fecha fin usando la función sumarDiasHabiles
-    const fechaFin: Date = sumarDiasHabiles(fechaInicio, tipoPrestamo[0].cantidad_cuotas);
-    req.body.fecha_fin_prestamo = fechaFin.toISOString().split('T')[0];
+    // Fusionar cálculos en el body
+    req.body = { ...req.body, ...calculos };
 
+    // 6. Insertar
     const newPrestamo = await prestamo.createPrestamo(req.body);
     return (!newPrestamo) 
     ? res.status(400).send({ error: 'No se pudo crear el préstamo' }) 
-    :  res.status(201).send({message:"Préstamo creado exitosamente"});
+    : res.status(201).send({message:"Préstamo creado exitosamente"});
+
   } catch (error) {
-   //console.error(error);
     return res.status(500).send({ error: 'Error al crear el préstamo' });
   }
 };
@@ -148,13 +151,34 @@ export const getPrestamosInfo = async (req: Request, res: Response): Promise<Res
 // Actualizar un préstamo   
 export const updatePrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const id = parseInt(req.params.id);
-    const updatedPrestamo = await prestamo.updatePrestamo(id, req.body);
-    if (!updatedPrestamo) {
+    //validar que el préstamo exista
+     const idPrestamo = parseInt(req.params.id);
+    const prestamoById = await prestamo.getPrestamoById(idPrestamo);
+    if (!prestamoById) {
       return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+
+    // Validar tipo de préstamo
+    const tipoPrestamo = await Tipoprestamo.getTipoPrestamoById(req.body.tipo_prestamo_id);
+    if (!tipoPrestamo || tipoPrestamo.length === 0) {
+      return res.status(400).send({ error: 'El tipo de préstamo especificado no existe' });
+    }
+
+    const tPrestamo = tipoPrestamo[0]; // Alias para simplificar lectura
+
+    const calculos = calcularDetallesPrestamo(req.body.monto_prestamo, tPrestamo);
+    
+    // Fusionar cálculos en el body
+    req.body = { ...req.body, ...calculos };
+
+
+    const updatedPrestamo = await prestamo.updatePrestamo(idPrestamo,req.body);
+    if (!updatedPrestamo) {
+      return res.status(404).json({ error: 'Préstamo no Actualizado' });
     }
     return res.status(200).json(updatedPrestamo);
     } catch (error) {
+      console.error(error);
     return res.status(500).json({ error: 'Error al actualizar el préstamo' });
     }
 };
@@ -191,6 +215,32 @@ function sumarDiasHabiles(fechaInicio: Date, diasParaSumar: number): Date {
 
   return fecha;
 }
+
+// realizar calculos de prestamo
+const calcularDetallesPrestamo = (monto: number, tPrestamo: any): any => {
+  // 1. Cálculos Financieros
+  const valorIntereses = monto * (tPrestamo.porcentaje / 100);
+ // const valorIntereses = Math.round(interesesRaw); // Redondeo seguro
+  
+  const saldoTotal = monto + valorIntereses;
+  const valorCuota = saldoTotal / tPrestamo.cantidad_cuotas;
+
+  // 2. Cálculo de Fechas
+  // Obtener fecha actual para evitar desfase de zona horaria
+  const fechaActualStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  const fechaInicio = new Date(fechaActualStr);
+  
+  const fechaFin = sumarDiasHabiles(fechaInicio, tPrestamo.cantidad_cuotas);
+  const fechaFinStr = fechaFin.toISOString().split('T')[0];
+
+  return {
+    valor_intereses: valorIntereses,
+    saldo_pendiente: saldoTotal,
+    valor_cuota: valorCuota,
+    fecha_desembolso: fechaActualStr,
+    fecha_fin_prestamo: fechaFinStr
+  };
+};
 
 export default {
   createPrestamo,

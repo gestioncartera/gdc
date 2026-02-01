@@ -10,6 +10,6 @@ router.get("/getPrestamosByCliente/:cliente_id", prestamo.getPrestamosByClienteI
 router.get("/getPrestamosInfo", prestamo.getPrestamosInfo);
 router.get("/getPrestamoInfoById/:prestamo_id", prestamo.getPrestamoInfoById);
 router.get("/prestamoCobros/:prestamo_id", prestamo.getPrestamoAndCobrosInfo);
-router.put("/updatePrestamo/:id", prestamo.updatePrestamo);
+router.patch("/updatePrestamo/:id", prestamo.updatePrestamo);
 router.delete("/deletePrestamo/:id", prestamo.deletePrestamo);
 export default router;

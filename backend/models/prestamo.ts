@@ -122,18 +122,26 @@ export const getPrestamosInfo = async (): Promise<Prestamo[]|any[]> => {
 };
 
 // Actualizar un préstamo
-export const updatePrestamo = async (prestamo_id: number, prestamo: Prestamo): Promise<Prestamo | null> => {
+export const updatePrestamo = async (prestamo_id: number,prestamo:Prestamo): Promise<Prestamo | null> => {
   const result = await db.query(
-    `UPDATE prestamos SET cliente_id = $1, periodo_id = $2, monto_prestamo = $3, fecha_desembolso = $4, estado_prestamo_id = $5, saldo_pendiente = $6, tipo_prestamo_id = $7 WHERE prestamo_id = $8 RETURNING *`,
+    `UPDATE prestamos SET  monto_prestamo = $2, 
+    tipo_prestamo_id = $3,
+    valor_intereses = $4, 
+    valor_cuota = $5,
+    fecha_desembolso = $6, 
+    saldo_pendiente = $7, 
+    fecha_fin_prestamo = $8 
+    WHERE prestamo_id = $1 RETURNING *`,
     [
-      prestamo.cliente_id,
-      prestamo.periodo_id,
-      prestamo.monto_prestamo,  
-      prestamo.fecha_desembolso,
-      prestamo.estado_prestamo,
-      prestamo.saldo_pendiente,
-      prestamo.tipo_prestamo_id,
+      
       prestamo_id,
+      prestamo.monto_prestamo,
+      prestamo.tipo_prestamo_id,
+      prestamo.valor_intereses,
+      prestamo.valor_cuota,
+      prestamo.fecha_desembolso,
+      prestamo.saldo_pendiente,
+      prestamo.fecha_fin_prestamo
     ]
   );
   return result.rows[0] || null;
