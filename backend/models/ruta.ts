@@ -48,10 +48,15 @@ order BY r.ruta_id ASC
 
   // Buscar una ruta por ID
 export async function getRutaById(id: number): Promise<Ruta | null> {
-  const result = await db.query('SELECT * FROM rutas WHERE ruta_id = $1',
-    [
-      id
-    ]);
+  const result = await db.query(
+    `SELECT r.*, 
+            COALESCE(u.nombres || ' ' || u.apellidos, 'No asignado') AS cobrador
+     FROM rutas r
+     LEFT JOIN asignaciones_rutas ar ON r.ruta_id = ar.ruta_id AND ar.estado = 'activo'
+     LEFT JOIN usuarios u ON ar.usuario_id = u.usuario_id
+     WHERE r.ruta_id = $1`,
+    [id]
+  );
   return result.rows[0] || null;
 }
 

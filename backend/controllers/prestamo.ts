@@ -178,7 +178,7 @@ export const updatePrestamo = async (req: Request, res: Response): Promise<Respo
     }
     return res.status(200).json(updatedPrestamo);
     } catch (error) {
-      console.error(error);
+     // console.error(error);
     return res.status(500).json({ error: 'Error al actualizar el préstamo' });
     }
 };

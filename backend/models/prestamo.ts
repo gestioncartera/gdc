@@ -70,8 +70,9 @@ export const getPrestamoById = async (prestamo_id: number): Promise<Prestamo | a
 //Obtener toda informacion de prestamo por id
 export const getPrestamoInfoById = async (prestamo_id: number): Promise<Prestamo | any> => {
   const result = await db.query
-  (`SELECT prestamos.*
-    FROM  prestamos
+  (`SELECT clientes.nombres||' '||clientes.apellidos AS cliente ,prestamos.*
+    FROM  clientes
+    inner join prestamos on clientes.cliente_id=prestamos.cliente_id
     WHERE prestamo_id = $1`, 
   [prestamo_id]);
   return result.rows[0] || null;

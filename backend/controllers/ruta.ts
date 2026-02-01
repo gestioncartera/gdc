@@ -39,6 +39,7 @@ const getRutaById = async (req: Request, res: Response) => {
           ? res.status(404).send({ message: 'Ruta no encontrada' }) 
           : res.status(200).json(rutaEncontrada);
     } catch (error) {
+       console.error(error);
         return res.status(500).send({ error: 'Error al obtener la ruta' });
     }
 };
