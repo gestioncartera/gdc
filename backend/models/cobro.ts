@@ -82,12 +82,16 @@ export const getCobrosByRutaId = async (ruta_id: number): Promise<Cobro[]|any> =
 //obtener cobros por prestamo ID
 export const getCobrosByPrestamoId = async (prestamo_id: number): Promise<Cobro[]|any> => {
   const result = await db.query
-  (`SELECT fecha_cobro, 
-    monto_cobrado, 
-    estado
-    FROM cobros 
-    WHERE prestamo_id = $1
-    order by fecha_cobro desc`,
+  (`SELECT c.fecha_cobro, 
+    sum(c.monto_cobrado) as monto_cobrado, 
+    c.estado,
+    p.fecha_desembolso,
+    p.fecha_fin_prestamo
+    FROM cobros c
+    inner join prestamos p on c.prestamo_id=p.prestamo_id
+    WHERE p.prestamo_id = $1
+    group by p.prestamo_id,c.fecha_cobro, c.estado, p.fecha_desembolso, p.fecha_fin_prestamo
+    order by c.fecha_cobro desc`,
      [prestamo_id]);
   return result.rows || null;
 };

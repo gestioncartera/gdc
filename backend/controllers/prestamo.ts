@@ -148,6 +148,8 @@ export const getPrestamosInfo = async (req: Request, res: Response): Promise<Res
   }
 };
 
+
+
 // Actualizar un préstamo   
 export const updatePrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {

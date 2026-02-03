@@ -125,6 +125,28 @@ export const getCobrosByRutaId = async (req: Request, res: Response): Promise<Re
   }
 };
 
+//Obtener el historial de cobros de un préstamo
+export const getPrestamoCobrosHistory = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const idPrestamo = parseInt(req.params.prestamo_id);
+    const cobrosHistory = await cobro.getCobrosByPrestamoId(idPrestamo);
+
+    
+    if (cobrosHistory.length===0) {
+    return res.status(404).send({ error: 'No existen cobros para este préstamo' }) 
+    }
+
+   
+   const planPagos=calcularPlanDePagos(cobrosHistory[0].fecha_desembolso, cobrosHistory[0].fecha_fin_prestamo,cobrosHistory);
+    //console.log('Plan de pagos calculado:', planPagos);
+
+   return  res.status(200).json(planPagos);
+  } catch (error) {
+   
+    return res.status(500).json({ error: 'Error al obtener el historial de cobros del préstamo' });
+  }
+};
+
 // Actualizar un cobro
 export const updateCobro = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -182,6 +204,44 @@ export const validarMultiplesCobros = async (req: Request, res: Response): Promi
   }
 };
 
+// Función para sumar días hábiles a una fecha de prestamo
+function calcularPlanDePagos(fechaInicio: Date, fechaFin: Date,cobrosHistory:any[]):any[] {
+
+ const mapaCobros = new Map();
+  cobrosHistory.forEach(cobro => {
+    // Asegurarse de tener solo la parte de la fecha YYYY-MM-DD
+    const fechaKey = new Date(cobro.fecha_cobro).toISOString().split('T')[0]; 
+    mapaCobros.set(fechaKey, cobro);
+  });
+
+let calendario :any []=[];
+
+  const fecha = new Date(fechaInicio);
+ 
+  
+
+  while (fecha <=fechaFin) { 
+ 
+//console.log(fecha);
+    // 0 = Domingo. Si NO es domingo, contamos el día.
+    if (fecha.getDay() !== 0) {
+       const fechaStr = fecha.toISOString().split('T')[0];
+
+        // Buscar si hubo pago ese día
+       const cobroRealizado = mapaCobros.get(fechaStr);
+     
+     calendario.push({
+         fecha: fechaStr,
+         estado: cobroRealizado ? cobroRealizado.estado :'No Pagado',
+         monto: cobroRealizado ? cobroRealizado.monto_cobrado : 0
+       });
+    }
+    fecha.setDate(fecha.getDate() + 1);
+  }
+
+  return calendario;
+}
+
 export default {
   createCobro,
   getAllCobros,
@@ -190,5 +250,6 @@ export default {
   getCobroInfoById,
   updateCobro,
   deleteCobro,
-  validarMultiplesCobros
+  validarMultiplesCobros,
+  getPrestamoCobrosHistory
 };
