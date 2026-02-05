@@ -41,7 +41,7 @@ export const deleteTipoPrestamo = async (id: number): Promise<TipoPrestamo | nul
 // Actualizar tipo de préstamo
 export const updateTipoPrestamo = async (id: number, tipoPrestamo: TipoPrestamo): Promise<TipoPrestamo | null> => {
   const updatedTipoPrestamo = await db.query(
-    'UPDATE tipo_prestamo SET cantidad_cuotas = $1, porcentaje = $2, nombre_tipo = $3 WHERE id_tipo_prestamo = $4 RETURNING *',
+    'UPDATE tipo_prestamo SET cantidad_cuotas = $1, porcentaje = $2, nombre= $3 WHERE id_tipo_prestamo = $4 RETURNING *',
     [
       tipoPrestamo.cantidad_cuotas,
       tipoPrestamo.porcentaje,

@@ -55,6 +55,7 @@ export const updateTipoPrestamo = async (req: Request, res: Response): Promise<R
     }
     return res.status(200).send(updatedTipoPrestamo);
   } catch (error) {
+    console.error(error);
     return res.status(500).send({ error: 'Error al actualizar el tipo de préstamo' });
   } 
 };
