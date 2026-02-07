@@ -38,6 +38,18 @@ export const getCobroById = async (cobro_id: number): Promise<Cobro | null> => {
   return result.rows[0] || null;
 };
 
+// Obtener múltiples cobros por sus IDs
+export const getCobrosByIds = async (cobroIds: number[]): Promise<Cobro[]> => {
+  if (cobroIds.length === 0) return [];
+  
+  const result = await db.query(
+    `SELECT * FROM cobros WHERE cobro_id = ANY($1)`,
+    [cobroIds]
+  );
+  
+  return result.rows;
+};
+
 //obtener la informacion del cobro por ID
 export const getCobroInfoById = async (cobro_id: number): Promise<Cobro | any> => {
   const result = await db.query(`select c.cobro_id,
@@ -136,7 +148,7 @@ export const deleteCobro = async (cobro_id: number): Promise<Cobro | null> => {
 // Validar un cobro y actualizar el saldo del préstamo asociado
 
 
-export async function validarMultiplesCobros(cobroIds: number[]) {
+export async function validarMultiplesCobros(cobros: Cobro[]) {
   const client = await db.connect(); 
   const resultados = {
     procesados: [] as number[],
@@ -146,9 +158,16 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
   try {
     await client.query('BEGIN');
 
-    for (const cobroId of cobroIds) {
+    for (const cobroInput of cobros) {
+       // Verificamos que tenga ID
+      if (!cobroInput.cobro_id) {
+          resultados.errores.push({ id: 0, motivo: 'Cobro sin ID' });
+          continue;
+      }
+      const currentId = cobroInput.cobro_id;
+
       try {
-        await client.query(`SAVEPOINT sp_${cobroId}`); // Punto de guardado para aislar errores
+        await client.query(`SAVEPOINT sp_${currentId}`); // Punto de guardado para aislar errores
 
         // A. Validar Cobro
         const resCobro = await client.query(
@@ -156,16 +175,16 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
            SET estado = 'confirmado' 
            WHERE cobro_id = $1 AND estado != 'confirmado' 
            RETURNING *`,
-          [cobroId]
+          [currentId]
         );
 
         if (resCobro.rowCount === 0) {
-           await client.query(`ROLLBACK TO SAVEPOINT sp_${cobroId}`);
-           resultados.errores.push({ id: cobroId, motivo: 'Cobro no existe o ya validado' });
+           await client.query(`ROLLBACK TO SAVEPOINT sp_${currentId}`);
+           resultados.errores.push({ id: currentId, motivo: 'Cobro no existe o ya validado' });
            continue;
         }
 
-        const cobro = resCobro.rows[0];
+        const cobroValidado = resCobro.rows[0];
 
         // B. Actualizar Préstamo
         await client.query(
@@ -177,15 +196,15 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
                                  ELSE estado_prestamo 
                                END
            WHERE prestamo_id = $2`,
-          [cobro.monto_cobrado, cobro.prestamo_id]
+          [cobroValidado.monto_cobrado, cobroValidado.prestamo_id]
         );
         
-        await client.query(`RELEASE SAVEPOINT sp_${cobroId}`); // Confirmar éxito parcial
-        resultados.procesados.push(cobroId);
+        await client.query(`RELEASE SAVEPOINT sp_${currentId}`); // Confirmar éxito parcial
+        resultados.procesados.push(currentId);
 
       } catch (err: any) {
-        await client.query(`ROLLBACK TO SAVEPOINT sp_${cobroId}`); // Deshacer cambios de ESTE cobro fallido
-        resultados.errores.push({ id: cobroId, motivo: err.message });
+        await client.query(`ROLLBACK TO SAVEPOINT sp_${currentId}`); // Deshacer cambios de ESTE cobro fallido
+        resultados.errores.push({ id: currentId, motivo: err.message });
       }
     }
 
@@ -204,6 +223,7 @@ export default {
   createCobro,
   getAllCobros,
   getCobroById,
+  getCobrosByIds,
   getCobrosByPrestamoId,
   getCobrosByRutaId,
   getCobroInfoById,

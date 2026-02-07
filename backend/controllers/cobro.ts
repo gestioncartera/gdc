@@ -37,7 +37,7 @@ if(cobradorPrestamo.usuario_id!==req.body.usuario_id){
   }
 };
 
-//Validar cobros, cambiar estado de cobro y afectar saldo del prestamo
+/* //Validar cobros, cambiar estado de cobro y afectar saldo del prestamo
 export const validarCobro = async (req: Request, res: Response): Promise<Response> => {
   try {
     const id = parseInt(req.params.cobro_id);
@@ -60,7 +60,7 @@ export const validarCobro = async (req: Request, res: Response): Promise<Respons
   } catch (error) {
     return res.status(500).json({ error: 'Error interno al validar el cobro' });
   }
-};
+}; */
 
 // Obtener todos los cobros
 export const getAllCobros = async (req: Request, res: Response): Promise<Response> => {
@@ -179,12 +179,15 @@ export const deleteCobro = async (req: Request, res: Response): Promise<Response
 // Validar múltiples cobros a la vez (Batch Processing)
 export const validarMultiplesCobros = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { cobroIds } = req.body; // Espera un JSON { "cobroIds": [1, 2, 3] }
+    //console.log('Request body recibido en validarMultiplesCobros:', req.body.cobroIds);
+
+    const ids: number[] = req.body.cobroIds.map(Number);
+    const  cobroIds : any[] = await cobro.getCobrosByIds(ids ) ;// Espera un JSON { "cobroIds": [1, 2, 3] }
 
     if (!Array.isArray(cobroIds) || cobroIds.length === 0) {
       return res.status(400).json({ error: 'Se requiere un array de "cobroIds" no vacío.' });
     }
-
+//console.log(req.body);
     const resultado = await cobro.validarMultiplesCobros(cobroIds);
 
     // Respuesta con resumen de lo que pasó
@@ -199,7 +202,7 @@ export const validarMultiplesCobros = async (req: Request, res: Response): Promi
     });
 
   } catch (error) {
-    console.error(error);
+    
     return res.status(500).json({ error: 'Error interno al procesar los cobros' });
   }
 };
