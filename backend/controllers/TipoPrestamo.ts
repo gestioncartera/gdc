@@ -20,7 +20,8 @@ export const createTipoPrestamo = async (req: Request, res: Response): Promise<R
 // Obtener todos los tipos de préstamo
 export const getTiposPrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const tiposPrestamo = await TipoPrestamo.getTiposPrestamo();
+    const idSucursal = parseInt(req.params.sucursal_id);
+    const tiposPrestamo = await TipoPrestamo.getTiposPrestamo(idSucursal);
     return (!tiposPrestamo )
     ? res.status(500).send({ error: 'No existen tipos de préstamo creados' })
     :res.status(200).json(tiposPrestamo);

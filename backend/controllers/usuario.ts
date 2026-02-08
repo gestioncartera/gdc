@@ -127,12 +127,14 @@ export const login = async (req: Request, res: Response) => {
 
     const usuarioEncontrado = await usuario.getUsuarioByEmail(req.body.email);
     if (!usuarioEncontrado) {
+      
       return res.status(401).send({ error: 'Credenciales inválidas' });
     }
 
     const validPassword = await bcrypt.compare(req.body.password, usuarioEncontrado.password);
 
     if (!validPassword) { 
+     
       return res.status(401).send({ error: 'Credenciales inválidas' });
     }
     

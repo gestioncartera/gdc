@@ -21,7 +21,8 @@ const createRuta =async (req: Request, res: Response) => {
 //obtener todas las rutas
 const getRutas = async (req: Request, res: Response) => {
     try {
-      const rutas = await ruta.getRutas();    
+        const idSucursal = parseInt(req.params.idSucursal);
+      const rutas = await ruta.getRutas(idSucursal);    
         return  rutas.length === 0
         ? res.status(404).send({ message: 'No se encontraron rutas' })
         : res.status(200).json(rutas);

@@ -99,10 +99,12 @@ export const deleteUsuario = async (id: number): Promise<Usuario | null > => {
 
 //obtener usuario por correo
 export const getUsuarioByEmail = async (email: string): Promise<Usuario | null> => {
+
   const result = await db.query('SELECT * FROM usuarios WHERE email = $1',
     [
       email
     ]);
+    
   return result.rows[0] || null;
 }
 

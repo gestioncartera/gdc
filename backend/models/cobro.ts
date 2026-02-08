@@ -28,7 +28,7 @@ export const createCobro = async (cobro: Cobro): Promise<Cobro | null> => {
 
 // Obtener todos los cobros
 export const getAllCobros = async (): Promise<Cobro[]|null> => {
-  const result = await db.query(`SELECT * FROM cobros`);
+  const result = await db.query(`SELECT * FROM cobros order by cobro_id asc`);
   return result.rows || null;
 };
 

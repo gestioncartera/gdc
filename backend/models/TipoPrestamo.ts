@@ -2,6 +2,7 @@ import db from "../db/db";
 
 export interface TipoPrestamo {
   id_tipo_prestamo?: number;
+  sucursal_id: number;
   cantidad_cuotas: number;
   porcentaje: number;
   nombre?: string;
@@ -10,8 +11,9 @@ export interface TipoPrestamo {
 // Crear un nuevo tipo de préstamo
 export const createTipoPrestamo = async (tipoPrestamo: TipoPrestamo): Promise<TipoPrestamo | null> => {
   const newTipoPrestamo = await db.query(
-    'INSERT INTO tipo_prestamo (cantidad_cuotas, porcentaje, nombre_tipo) VALUES ($1, $2, $3) RETURNING *',
+    'INSERT INTO tipo_prestamo (sucursal_id, cantidad_cuotas, porcentaje, nombre_tipo) VALUES ($1, $2, $3, $4) RETURNING *',
     [
+      tipoPrestamo.sucursal_id,
       tipoPrestamo.cantidad_cuotas,
       tipoPrestamo.porcentaje,
       tipoPrestamo.nombre ||'Prestamo '+ tipoPrestamo.cantidad_cuotas +'cuotas'
@@ -21,8 +23,11 @@ export const createTipoPrestamo = async (tipoPrestamo: TipoPrestamo): Promise<Ti
 };
 
 // Obtener todos los tipos de préstamo
-export const getTiposPrestamo = async (): Promise<TipoPrestamo[]> => {
-  const result = await db.query('SELECT * FROM tipo_prestamo');
+export const getTiposPrestamo = async (idSucursal:number): Promise<TipoPrestamo[]> => {
+  const result = await db.query('SELECT * FROM tipo_prestamo WHERE sucursal_id = $1'
+    ,[idSucursal]
+  
+  );
   return result.rows;
 };
 
@@ -41,8 +46,9 @@ export const deleteTipoPrestamo = async (id: number): Promise<TipoPrestamo | nul
 // Actualizar tipo de préstamo
 export const updateTipoPrestamo = async (id: number, tipoPrestamo: TipoPrestamo): Promise<TipoPrestamo | null> => {
   const updatedTipoPrestamo = await db.query(
-    'UPDATE tipo_prestamo SET cantidad_cuotas = $1, porcentaje = $2, nombre= $3 WHERE id_tipo_prestamo = $4 RETURNING *',
+    'UPDATE tipo_prestamo SET sucursal_id = $1, cantidad_cuotas = $2, porcentaje = $3, nombre= $4 WHERE id_tipo_prestamo = $5 RETURNING *',
     [
+      tipoPrestamo.sucursal_id,
       tipoPrestamo.cantidad_cuotas,
       tipoPrestamo.porcentaje,
       tipoPrestamo.nombre,

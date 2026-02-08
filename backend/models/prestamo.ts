@@ -4,7 +4,7 @@ import db from "../db/db";
 export interface Prestamo {
   prestamo_id?: number;
   cliente_id: number;
-  periodo_id: number;
+  sucursal_id: number;
   monto_prestamo: number;
   fecha_desembolso?: Date;
   estado_prestamo?: string;
@@ -19,7 +19,7 @@ export interface Prestamo {
 export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo| null> => {
   const result = await db.query(
     `INSERT INTO prestamos (cliente_id, 
-                            periodo_id, 
+                            sucursal_id, 
                             monto_prestamo, 
                             fecha_desembolso, 
                             estado_prestamo, 
@@ -31,7 +31,7 @@ export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo| null
                             fecha_fin_prestamo ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
     [
       prestamo.cliente_id,
-      prestamo.periodo_id,  
+      prestamo.sucursal_id,  
       prestamo.monto_prestamo,
       prestamo.fecha_desembolso||new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),// new Date().toISOString().slice(0, 10),
       prestamo.estado_prestamo||'en curso',
@@ -154,11 +154,7 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   return result.rows[0] || null;
 };  
 
-// Contar préstamos por periodo
-export const countPrestamosByPeriodo = async (periodo_id: number): Promise<number> => {
-  const result = await db.query(`SELECT COUNT(*) FROM prestamos WHERE periodo_id = $1`, [periodo_id]);
-  return parseInt(result.rows[0].count);
-};
+
 
  export default{
   createPrestamo,
@@ -169,8 +165,7 @@ export const countPrestamosByPeriodo = async (periodo_id: number): Promise<numbe
   getPrestamosInfo,
   getPrestamoInfoById,
   updatePrestamo,
-  deletePrestamo,
-  countPrestamosByPeriodo
+  deletePrestamo
 };
 
 

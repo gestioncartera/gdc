@@ -29,7 +29,7 @@ export async function getSucursalByName(nombre: string): Promise<Sucursal | null
 
 // Obtener todas las sucursales
 export async function getSucursales(): Promise<Sucursal[]> {
-  const result = await db.query('SELECT * FROM sucursales');
+  const result = await db.query('SELECT * FROM sucursales order by sucursal_id asc');
   return result.rows;
 }
 

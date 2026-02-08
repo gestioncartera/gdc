@@ -4,7 +4,6 @@ import  dotenv, { config }  from 'dotenv';
 import  db  from './db/db';
 
 import  sucursal  from './routes/sucursal'; 
-import  periodo  from './routes/periodo';
 import  ruta  from './routes/ruta';
 import  cliente from './routes/cliente';
 import usuario from './routes/usuario';
@@ -23,7 +22,6 @@ app.use(express.json());
 app.use(cors());
 
 app.use('/api/sucursal', sucursal);
-app.use('/api/periodo', periodo);
 app.use('/api/ruta', ruta);
 app.use('/api/cliente', cliente);
 app.use('/api/usuario', usuario);
