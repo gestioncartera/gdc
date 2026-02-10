@@ -31,7 +31,8 @@ const createCliente =async (req: Request, res: Response) => {
 //obtener todos los clientes
 const getClientes = async (req: Request, res: Response) => {
     try {
-      const clientes = await cliente.getClientes();    
+        const sucursal_id = parseInt(req.params.sucursal_id);
+      const clientes = await cliente.getClientes(sucursal_id);    
         return  clientes.length === 0
         ? res.status(404).send({ message: 'No se encontraron clientes' })
         : res.status(200).json(clientes);

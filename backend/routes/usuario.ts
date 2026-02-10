@@ -5,7 +5,7 @@ import { esAdmin } from "../middlewares/admin";
 const router = express.Router();
 //routes usuario
 router.post('/createUsuario', usuario.createUsuario);
-router.get('/getUsuarios', usuario.getUsuarios);
+router.get('/getUsuarios/:idSucursal', usuario.getUsuarios);
 router.get('/getUsuarioById/:id', usuario.getUsuarioById);
 router.get('/getUsuarioByDNI/:dni', usuario.getUsuarioByDNI);
 router.post('/login', usuario.login);

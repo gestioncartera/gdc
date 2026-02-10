@@ -38,8 +38,9 @@ export const createUsuario = async (usuario: Usuario): Promise<Usuario|null> => 
 }
 
 //obtener todos los usuarios
-export const getUsuarios = async (): Promise<Usuario[]> => {
-  const result = await db.query( `SELECT * FROM usuarios `); //solo cobradores
+export const getUsuarios = async (idSucursal: number): Promise<Usuario[]> => {
+  const result = await db.query( `SELECT * FROM usuarios WHERE sucursal_id = $1`, 
+    [idSucursal]); 
   return result.rows;
 }
 

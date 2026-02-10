@@ -11,7 +11,7 @@ export interface TipoPrestamo {
 // Crear un nuevo tipo de préstamo
 export const createTipoPrestamo = async (tipoPrestamo: TipoPrestamo): Promise<TipoPrestamo | null> => {
   const newTipoPrestamo = await db.query(
-    'INSERT INTO tipo_prestamo (sucursal_id, cantidad_cuotas, porcentaje, nombre_tipo) VALUES ($1, $2, $3, $4) RETURNING *',
+    'INSERT INTO tipo_prestamo (sucursal_id, cantidad_cuotas, porcentaje, nombre) VALUES ($1, $2, $3, $4) RETURNING *',
     [
       tipoPrestamo.sucursal_id,
       tipoPrestamo.cantidad_cuotas,

@@ -31,7 +31,8 @@ export const createUsuario = async (req: Request, res: Response) => {
 //obtener todos los usuarios
 export const getUsuarios = async (req: Request, res: Response) => {
   try {
-    const usuarios = await usuario.getUsuarios();
+    const idSucursal = parseInt(req.params.idSucursal);
+    const usuarios = await usuario.getUsuarios(idSucursal);
     return usuarios.length === 0
       ? res.status(404).send({ message: 'No se encontraron usuarios' })
       : res.status(200).json(usuarios);

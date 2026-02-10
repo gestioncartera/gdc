@@ -38,6 +38,18 @@ export const getCobroById = async (cobro_id: number): Promise<Cobro | null> => {
   return result.rows[0] || null;
 };
 
+//Obtener cobros pendientes de un prestamo por ID
+export const getCobrosPendientesByPrestamoId = async (prestamo_id: number): Promise<Cobro[]|null> => {
+  const result = await db.query(`SELECT * FROM cobros 
+    WHERE prestamo_id = $1 
+    AND estado='pendiente' 
+    order by fecha_cobro asc`
+    , 
+    [prestamo_id]
+  );
+  return result.rows || null;
+};
+
 // Obtener múltiples cobros por sus IDs
 export const getCobrosByIds = async (cobroIds: number[]): Promise<Cobro[]> => {
   if (cobroIds.length === 0) return [];
@@ -227,6 +239,7 @@ export default {
   getCobrosByPrestamoId,
   getCobrosByRutaId,
   getCobroInfoById,
+  getCobrosPendientesByPrestamoId,
   updateCobro,
   deleteCobro,
   validarCobro,

@@ -8,6 +8,12 @@ import { Request, Response } from "express";
 // Crear un nuevo cobro
 export const createCobro = async (req: Request, res: Response): Promise<Response> => {
   try {
+    //validar que  el prestamo no tenga cobros pendientes anteriores
+    const cobrosPendientes = await cobro.getCobrosPendientesByPrestamoId(req.body.prestamo_id);
+    if (cobrosPendientes && cobrosPendientes.length > 0) {
+      return res.status(400).json({ error: 'El préstamo tiene cobros pendientes anteriores' });
+    }
+
     //validar si el prestamo existe
     const prestamoExistente = await prestamo.getPrestamoById(req.body.prestamo_id);
     if (!prestamoExistente) {

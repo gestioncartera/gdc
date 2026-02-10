@@ -7,12 +7,14 @@ export const createTipoPrestamo = async (req: Request, res: Response): Promise<R
     if (req.body.cantidad_cuotas === undefined || req.body.porcentaje === undefined) {
       return res.status(400).send({ error: 'La cantidad de cuotas y el porcentaje son obligatorios' });
     }
+   
     const tipoPrestamo = req.body;
     const newTipoPrestamo = await TipoPrestamo.createTipoPrestamo(tipoPrestamo);
     return (!newTipoPrestamo) 
     ?  res.status(500).send({ error: 'No se pudo crear el tipo de préstamo' }) 
     : res.status(201).send({ message: 'Tipo de préstamo creado exitosamente' });
   } catch (error) {
+   
     return res.status(500).send({ error: 'Error al crear el tipo de préstamo' });
   }
 };
@@ -27,6 +29,7 @@ export const getTiposPrestamo = async (req: Request, res: Response): Promise<Res
     :res.status(200).json(tiposPrestamo);
   }
     catch (error) {
+      
     return res.status(500).send({ error: 'Error al obtener los tipos de préstamo' });
   }
 };

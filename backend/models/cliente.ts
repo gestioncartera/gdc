@@ -35,9 +35,10 @@ export async function createCliente(cliente: Cliente): Promise<Cliente|null> {
   return newCliente.rows[0]||null;
 }   
 
-// Obtener todos los clientes
-export async function getClientes(): Promise<Cliente[]> {
-  const result = await db.query('SELECT * FROM clientes');
+// Obtener todos los clientes por sucursal ID
+export async function getClientes(idSucursal: number): Promise<Cliente[]> {
+  const result = await db.query('SELECT * FROM clientes WHERE sucursal_id = $1 order by cliente_id asc', 
+    [idSucursal]);
   return result.rows;
 }
 
