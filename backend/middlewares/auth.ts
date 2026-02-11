@@ -20,9 +20,10 @@ declare global {
 
 export const validarJWT = (req: Request, res: Response, next: NextFunction) => {
     // x-token headers
-    const token = req.header('x-token');
+    const token = req.header('Authorization');
+    const actualToken = token?.split(' ')[1] || null; // Extraer el token del formato "Bearer <token>"
 
-    if (!token) {
+    if (!actualToken) {
         return res.status(401).json({
             ok: false,
             msg: 'No hay token en la petición'
@@ -31,7 +32,7 @@ export const validarJWT = (req: Request, res: Response, next: NextFunction) => {
 
     try {
         const { uid, email } = jwt.verify(
-            token,
+            actualToken,
             process.env.SK_JWT || ''
         ) as IPayload;
 
@@ -47,3 +48,6 @@ export const validarJWT = (req: Request, res: Response, next: NextFunction) => {
 
     next();
 }
+
+export default  validarJWT
+;
