@@ -1,8 +1,13 @@
 import jwt from 'jsonwebtoken';
+import {Usuario} from '../models/usuario';
 
-export const generarJWT = (uid: number, name: string) => {
+export const generarJWT = (usuario: Usuario) => {
     return new Promise((resolve, reject) => {
-        const payload = { uid, name };
+        const payload = {usuario_id: usuario.usuario_id,
+            tipo_usuario: usuario.tipo_usuario,
+            sucursal_id: usuario.sucursal_id
+
+        };
 
         jwt.sign(payload, process.env.SK_JWT || '', {
             expiresIn: '4h'
