@@ -1,16 +1,17 @@
 import cobro from '../controllers/cobro';
 import express from 'express';
+import auth from "../middlewares/auth";
 
 const router = express.Router();
 
-router.post('/createCobro', cobro.createCobro);
-router.get('/getAllCobros', cobro.getAllCobros);
-router.get('/getCobroById/:cobro_id', cobro.getCobroById);
-router.get('/getCobrosByRutaId/:ruta_id', cobro.getCobrosByRutaId);
-router.get('/getCobroInfoById/:cobro_id', cobro.getCobroInfoById);
-router.get('/getCobrosByPrestamoId/:prestamo_id', cobro.getPrestamoCobrosHistory);
-//router.put('/updateCobro/:cobro_id', cobro.updateCobro);
-router.delete('/deleteCobro/:cobro_id', cobro.deleteCobro);
-router.patch('/validarMultiplesCobros', cobro.validarMultiplesCobros);
+router.post('/createCobro', auth, cobro.createCobro);
+router.get('/getAllCobros', auth, cobro.getAllCobros);
+router.get('/getCobroById/:cobro_id', auth, cobro.getCobroById);
+router.get('/getCobrosByRutaId/:ruta_id', auth, cobro.getCobrosByRutaId);
+router.get('/getCobroInfoById/:cobro_id', auth, cobro.getCobroInfoById);
+router.get('/getCobrosByPrestamoId/:prestamo_id', auth, cobro.getPrestamoCobrosHistory);
+//router.put('/updateCobro/:cobro_id', auth, cobro.updateCobro);
+router.delete('/deleteCobro/:cobro_id', auth, cobro.deleteCobro);
+router.patch('/validarMultiplesCobros', auth, cobro.validarMultiplesCobros);
 
 export default router;

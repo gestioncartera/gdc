@@ -1,15 +1,16 @@
 import prestamo from "../controllers/prestamo";
 import express from "express";
+import auth from "../middlewares/auth";
 
 const router = express.Router();
 
-router.post("/createPrestamo", prestamo.createPrestamo);
-router.get("/getAllPrestamos", prestamo.getAllPrestamos);
-router.get("/getPrestamoById/:id", prestamo.getPrestamoById);
-router.get("/getPrestamosByCliente/:cliente_id", prestamo.getPrestamosByClienteId);
-router.get("/getPrestamosInfo", prestamo.getPrestamosInfo);
-router.get("/getPrestamoInfoById/:prestamo_id", prestamo.getPrestamoInfoById);
-router.get("/prestamoCobros/:prestamo_id", prestamo.getPrestamoAndCobrosInfo);
-router.patch("/updatePrestamo/:id", prestamo.updatePrestamo);
-router.delete("/deletePrestamo/:id", prestamo.deletePrestamo);
+router.post("/createPrestamo", auth, prestamo.createPrestamo);
+router.get("/getAllPrestamos", auth, prestamo.getAllPrestamos);
+router.get("/getPrestamoById/:id", auth, prestamo.getPrestamoById);
+router.get("/getPrestamosByCliente/:cliente_id", auth, prestamo.getPrestamosByClienteId);
+router.get("/getPrestamosInfo", auth, prestamo.getPrestamosInfo);
+router.get("/getPrestamoInfoById/:prestamo_id", auth, prestamo.getPrestamoInfoById);
+router.get("/prestamoCobros/:prestamo_id", auth, prestamo.getPrestamoAndCobrosInfo);
+router.patch("/updatePrestamo/:id", auth, prestamo.updatePrestamo);
+router.delete("/deletePrestamo/:id", auth, prestamo.deletePrestamo);
 export default router;

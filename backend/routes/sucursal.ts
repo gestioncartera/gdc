@@ -1,14 +1,15 @@
 import express from "express";
 import sucursal from "../controllers/sucursal";
+import auth from "../middlewares/auth";
 
 
 const router = express.Router();
 
-router.get('/getSucursales', sucursal.getSucursales);
-router.get('/getSucursalById/:id', sucursal.getSucursalById);
-router.post('/createSucursal', sucursal.createSucursal);
-router.put('/updateSucursal/:id', sucursal.updateSucursal);
-router.delete('/deleteSucursal/:id', sucursal.deleteSucursal);
+router.get('/getSucursales', auth, sucursal.getSucursales);
+router.get('/getSucursalById/:id', auth, sucursal.getSucursalById);
+router.post('/createSucursal', auth, sucursal.createSucursal);
+router.put('/updateSucursal/:id', auth, sucursal.updateSucursal);
+router.delete('/deleteSucursal/:id', auth, sucursal.deleteSucursal);
 
 
 

@@ -1,16 +1,20 @@
 import usuario from "../controllers/usuario";
 import express from "express";
-import { esAdmin } from "../middlewares/admin";
+import admin from "../middlewares/admin";
+import auth from "../middlewares/auth";
 
 const router = express.Router();
-//routes usuario
-router.post('/createUsuario', usuario.createUsuario);
-router.get('/getUsuarios/:idSucursal', usuario.getUsuarios);
-router.get('/getUsuarioById/:id', usuario.getUsuarioById);
-router.get('/getUsuarioByDNI/:dni', usuario.getUsuarioByDNI);
+
+// Ruta pública
 router.post('/login', usuario.login);
-router.patch('/updatePassword/:id', usuario.updatePassword);
-router.put('/updateUsuario/:id', usuario.updateUsuario);
-router.delete('/deleteUsuario/:id', usuario.deleteUsuario);
+
+//routes usuario
+router.post('/createUsuario', auth, usuario.createUsuario);
+router.get('/getUsuarios/:idSucursal', auth,admin, usuario.getUsuarios);
+router.get('/getUsuarioById/:id', auth, usuario.getUsuarioById);
+router.get('/getUsuarioByDNI/:dni', auth, usuario.getUsuarioByDNI);
+router.patch('/updatePassword/:id', auth, usuario.updatePassword);
+router.put('/updateUsuario/:id', auth, usuario.updateUsuario);
+router.delete('/deleteUsuario/:id', auth, usuario.deleteUsuario);
 
 export default router;

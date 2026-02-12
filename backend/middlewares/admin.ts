@@ -2,19 +2,19 @@ import { Request, Response, NextFunction } from 'express';
 import usuarioModel from '../models/usuario';
 import db from '../db/db'; // Importar db para consultar el nombre del rol si es necesario
 
-export const esAdmin = async (req: Request, res: Response, next: NextFunction) => {
+export const Admin = async (req: Request, res: Response, next: NextFunction) => {
     // req.uid viene del middleware validar-jwt
-    if (!req.uid) {
-        return res.status(500).json({
+    if (!req.user.tipo_usuario) {
+        return res.status(500).send({
             msg: 'Se quiere verificar el role sin validar el token primero'
         });
     }
 
     try {
-        const usuario = await usuarioModel.getUsuarioById(req.uid);
+        const usuario = await usuarioModel.getUsuarioById(req.user.usuario_id);
 
         if (!usuario) {
-            return res.status(404).json({
+            return res.status(404).send({
                 msg: 'Usuario no encontrado'
             });
         }
@@ -24,7 +24,7 @@ export const esAdmin = async (req: Request, res: Response, next: NextFunction) =
         const roleQuery = await db.query('SELECT nombre_tipo_usuario FROM tipo_usuario WHERE id_tipo_usuario = $1', [usuario.tipo_usuario]);
         
         if (roleQuery.rows.length === 0) {
-             return res.status(401).json({
+             return res.status(401).send({
                 msg: 'Rol de usuario no válido'
             });
         }
@@ -33,16 +33,18 @@ export const esAdmin = async (req: Request, res: Response, next: NextFunction) =
 
         // Verifica si el rol es Administrador (ajusta el string según tu DB: 'ADMIN', 'ADMINISTRADOR', etc.)
         if (nombreRole !== 'ADMINISTRADOR' && nombreRole !== 'ADMIN') {
-            return res.status(401).json({
-                msg: `${usuario.nombres} no es administrador - No puede hacer esto`
+            return res.status(401).send({
+                msg: `${usuario.nombres} no es administrador - Faltan permisos`
             });
         }
 
         next();
     } catch (error) {
-        console.log(error);
-        res.status(500).json({
+        //console.log(error);
+        res.status(500).send({
             error: 'Error al verificar rol de administrador'
         });
     }
 };
+
+export default Admin;
