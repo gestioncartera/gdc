@@ -110,6 +110,7 @@ export const getUsuarioByEmail = async (email: string): Promise<Usuario | null> 
 }
 
 
+
 export default {
   createUsuario,
   getUsuarios,

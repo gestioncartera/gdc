@@ -142,7 +142,26 @@ const deleteCliente = async (req: Request, res: Response) => {
     }
 };
 
-//asiganar ruta
+//Actualizar el orden de los clientes en la ruta- resibiendo un array de objetos con cliente_id y nuevo orden, TAMBIEN  el id ruta para actualizar esta en la tabla clientes.
+    
+ const actualizarOrdenClientes = async (req: Request, res: Response) => {
+  try {   
+    
+    const clientesOrdenados = req.body; // [{ cliente_id: 1, nuevo_orden: 1 }, { cliente_id: 2, nuevo_orden: 2 }, ...]
+   
+     if (!Array.isArray(clientesOrdenados) || clientesOrdenados.length === 0) {
+            return res.status(400).json({ error: 'Se requiere un array de clientes con su nuevo orden' });
+        }
+    const id_ruta=parseInt(req.params.id_ruta);
+    const resultado = await cliente.actualizarOrdenClientes(id_ruta, clientesOrdenados);
+    if (!resultado || resultado.length === 0) {
+      return res.status(400).json({ error:'Error al actualizar el orden de los clientes' });
+    }
+    return res.status(200).json({ message: 'Ruta actualizada exitosamente' });
+    } catch (error) {
+    return res.status(500).json({ error: 'Error al actualizar el orden de los clientes' });
+    }
+}; 
 
 
 export default{
@@ -153,5 +172,6 @@ export default{
     getClientesByRuta,
     getClientesByUser,
     updateCliente,
-    deleteCliente
+    deleteCliente,
+    actualizarOrdenClientes
 }

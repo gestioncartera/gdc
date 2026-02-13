@@ -12,6 +12,7 @@ export interface Cliente {
   estado?: string;
   created_at?: Date;
   id_ruta: number;
+  orden_ruta?: number;
 }
 
 // Crear un nuevo cliente
@@ -60,7 +61,7 @@ export async function getClientesBySucursal(sucursal_id: number): Promise<Client
 }
 
 export async function getClientesByRuta(id_ruta: number): Promise<Cliente[]> {
-  const result = await db.query('SELECT * FROM clientes WHERE id_ruta = $1',
+  const result = await db.query('SELECT * FROM clientes WHERE id_ruta = $1 order by orden_ruta asc',
     [id_ruta]);
   return result.rows;
 }
@@ -119,6 +120,19 @@ export async function deleteCliente(id: number): Promise<Cliente|null > {
   return clienteEliminado.rows[0] ||null;
 }
 
+//Actualizar el orden de los clientes en la ruta
+export async function actualizarOrdenClientes(id_ruta:number,clientesOrdenados: { cliente_id: number; nuevo_orden: number }[]): Promise<any[]|null> {
+  const clientIds = clientesOrdenados.map(c => c.cliente_id);
+  const ordenCases = clientesOrdenados.map(c => `WHEN cliente_id = ${c.cliente_id} THEN ${c.nuevo_orden}`).join(' ');
+  
+  const result = await db.query(
+    `UPDATE clientes SET orden_ruta = CASE ${ordenCases} END, id_ruta = $1
+     WHERE cliente_id IN (${clientIds.join(',')}) returning *`,
+     [id_ruta]
+  );
+  return result.rows || null;
+}
+
 export default{
   createCliente,
   getClientes,
@@ -127,7 +141,8 @@ export default{
   getClientesByRuta,
   getClientesByUser,
   updateCliente,
-  deleteCliente
+  deleteCliente,
+  actualizarOrdenClientes
 };
 
 
