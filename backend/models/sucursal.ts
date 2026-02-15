@@ -33,21 +33,69 @@ export async function getSucursales(): Promise<Sucursal[]> {
   return result.rows;
 }
 
-// Crear una nueva sucursal
+// Crear una nueva sucursal con transacción (Caja + Ruta)
 export async function createSucursal(sucursal: Sucursal): Promise<Sucursal> {
-  const newSucursal=await db.query(
-    `INSERT INTO sucursales (nombre, direccion, telefono, fecha_creacion, estado)
-     VALUES ($1, $2, $3, $4, $5)  RETURNING *`,
-    [
-      sucursal.nombre,
-      sucursal.direccion,
-      sucursal.telefono || null,
-      sucursal.fecha_creacion || new Date().toISOString().slice(0, 10),
-      sucursal.estado || 'activo'
-    ]
-  );
+  const client = await db.connect();
   
-  return newSucursal.rows[0] ;
+  try {
+    await client.query('BEGIN');
+
+    // 1. Crear Sucursal
+    const newSucursalRes = await client.query(
+      `INSERT INTO sucursales (nombre, direccion, telefono, fecha_creacion, estado)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [
+        sucursal.nombre,
+        sucursal.direccion,
+        sucursal.telefono || null,
+        sucursal.fecha_creacion || new Date().toISOString().slice(0, 10),
+        sucursal.estado || 'activo'
+      ]
+    );
+
+    const newSucursal = newSucursalRes.rows[0];
+
+    if (!newSucursal) {
+      throw new Error('No se pudo crear la sucursal');
+    }
+
+    // 2. Crear Caja Inicial
+    await client.query(
+      `INSERT INTO cajas_sucursales (sucursal_id, saldo_actual, fecha_ultima_actualizacion) 
+       VALUES ($1, $2, NOW())`,
+      [newSucursal.sucursal_id, 0]
+    );
+
+    // 3. Crear Ruta Default
+    const nombreRuta = `Ruta General - ${newSucursal.nombre}`;
+    await client.query(
+      `INSERT INTO rutas (sucursal_id,
+       nombre_ruta, 
+       descripcion, 
+       zona, 
+       fecha_creacion,
+       estado, 
+       created_at)
+       VALUES ($1, $2, $3, $4, $5,$6, NOW())`,
+      [
+        newSucursal.sucursal_id,
+        nombreRuta,
+        'Ruta inicial generada automáticamente',
+        'General',
+        new Date().toISOString(),
+        'activo'
+      ]
+    );
+
+    await client.query('COMMIT');
+    return newSucursal;
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 // Actualizar una sucursal

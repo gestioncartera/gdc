@@ -15,7 +15,7 @@ export interface CajaDiaria {
 }
 
 // Crear una nueva caja diaria
-export async function createCajaDiaria(caja: CajaDiaria): Promise<CajaDiaria | null> {
+export const createCajaDiaria = async (caja: CajaDiaria): Promise<CajaDiaria | null> => {
   const result = await db.query(
     `INSERT INTO cajas_diarias (
       usuario_id, 
@@ -27,7 +27,7 @@ export async function createCajaDiaria(caja: CajaDiaria): Promise<CajaDiaria | n
     [
       caja.usuario_id,
       caja.ruta_id,
-      caja.fecha_apertura || new Date(),
+      caja.fecha_apertura || new Date().toISOString().slice(0, 10),
       caja.monto_base_inicial,
       caja.estado || 'abierta'
     ]
@@ -36,31 +36,31 @@ export async function createCajaDiaria(caja: CajaDiaria): Promise<CajaDiaria | n
 }
 
 // Obtener todas las cajas diarias
-export async function getAllCajasDiarias(): Promise<CajaDiaria[] | null> {
+export const getAllCajasDiarias = async (): Promise<CajaDiaria[] | null> => {
   const result = await db.query(`SELECT * FROM cajas_diarias ORDER BY created_at DESC`);
   return result.rows || null;
 }
 
 // Obtener una caja diaria por ID
-export async function getCajaDiariaById(id: number): Promise<CajaDiaria | null> {
+export const getCajaDiariaById = async (id: number): Promise<CajaDiaria | null> => {
   const result = await db.query(`SELECT * FROM cajas_diarias WHERE caja_diaria_id = $1`, [id]);
   return result.rows[0] || null;
 }
 
 // Obtener cajas por usuario
-export async function getCajasDiariasByUsuario(usuario_id: number): Promise<CajaDiaria[] | null> {
+export const getCajasDiariasByUsuario = async (usuario_id: number): Promise<CajaDiaria[] | null> => {
   const result = await db.query(`SELECT * FROM cajas_diarias WHERE usuario_id = $1 ORDER BY created_at DESC`, [usuario_id]);
   return result.rows || null;
 }
 
 // Obtener cajas por ruta
-export async function getCajasDiariasByRuta(ruta_id: number): Promise<CajaDiaria[] | null> {
+export const getCajasDiariasByRuta = async (ruta_id: number): Promise<CajaDiaria[] | null> => {
   const result = await db.query(`SELECT * FROM cajas_diarias WHERE ruta_id = $1 ORDER BY created_at DESC`, [ruta_id]);
   return result.rows || null;
 }
 
 // Actualizar una caja diaria
-export async function updateCajaDiaria(id: number, caja: Partial<CajaDiaria>): Promise<CajaDiaria | null> {
+export const updateCajaDiaria = async (id: number, caja: Partial<CajaDiaria>): Promise<CajaDiaria | null> => {
   const result = await db.query(
     `UPDATE cajas_diarias SET 
       fecha_cierre = COALESCE($1, fecha_cierre),
@@ -88,7 +88,7 @@ export async function updateCajaDiaria(id: number, caja: Partial<CajaDiaria>): P
 }
 
 // Eliminar una caja diaria
-export async function deleteCajaDiaria(id: number): Promise<void> {
+export const deleteCajaDiaria = async (id: number): Promise<void> => {
   await db.query(`DELETE FROM cajas_diarias WHERE caja_diaria_id = $1`, [id]);
 }
 

@@ -12,7 +12,7 @@ export const createPrestamo = async (req: Request, res: Response): Promise<Respo
       return res.status(400).json({ error: 'Faltan datos obligatorios para crear el préstamo' });
     }
 
-    // 2. Validar que el cliente exista (Buenas prácticas)
+    // 2. Validar que el cliente exista 
     const existeCliente = await cliente.getClienteById(req.body.cliente_id);
     if (!existeCliente) {
       return res.status(404).json({ error: 'El cliente especificado no existe' });

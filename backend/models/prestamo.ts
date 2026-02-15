@@ -34,7 +34,7 @@ export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo| null
       prestamo.sucursal_id,  
       prestamo.monto_prestamo,
       prestamo.fecha_desembolso||new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),// new Date().toISOString().slice(0, 10),
-      prestamo.estado_prestamo||'en curso',
+      prestamo.estado_prestamo||'pendiente',
       prestamo.saldo_pendiente || prestamo.monto_prestamo,
       prestamo.created_at || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),//new Date().toISOString().slice(0, 10),
       prestamo.tipo_prestamo_id,

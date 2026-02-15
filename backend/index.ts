@@ -13,6 +13,8 @@ import AsignacionRuta from './routes/AsignacionRuta';
 import prestamo from './routes/prestamo';
 import cobro from './routes/cobro';
 import GastoOperacion from './routes/GastoOperacion';
+import CajaSucursal from './routes/CajaSucursal';
+import movtoCajaSucursal from './routes/movimiento_caja_sucursal';
 
 dotenv.config();
 
@@ -31,7 +33,8 @@ app.use('/api/asignacionruta', AsignacionRuta);
 app.use('/api/prestamo', prestamo);
 app.use('/api/cobro', cobro);
 app.use('/api/gastooperacion', GastoOperacion);
-
+app.use('/api/cajasucursal', CajaSucursal);
+app.use('/api/movimientocajasucursal', movtoCajaSucursal);
 
 app.listen(process.env.PORT,()=>console.log(`Server running on port ${process.env.PORT}`));
 

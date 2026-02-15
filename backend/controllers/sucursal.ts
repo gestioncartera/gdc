@@ -1,5 +1,6 @@
 import sucursal from '../models/sucursal';
 import ruta from '../models/ruta';
+import cajaSucursal from '../models/CajaSucursal';
 import { Request, Response } from 'express';  
 
 const getSucursalById = async (req: Request, res: Response) => {
@@ -50,28 +51,19 @@ const createSucursal = async (req: Request, res: Response) => {
         return res.status(409).send({ error: 'Ya existe una sucursal con ese nombre' });
       }
 
-    const nuevaSucursal =     await sucursal.createSucursal(req.body);
-   /*  
-    return (!nuevaSucursal)
-    ?res.status(201).send({ message: 'Sucursal creada exitosamente' })
-    : res.status(400).send({ error: 'Error al crear la sucursal' });
-     */
-    if(nuevaSucursal.sucursal_id===undefined){
-      return res.status(400).send({ error: 'No se pudo crear la sucursal' });
+    const nuevaSucursal = await sucursal.createSucursal(req.body);
+
+    if (!nuevaSucursal || !nuevaSucursal.sucursal_id) {
+       return res.status(400).send({ error: 'No se pudo crear la sucursal' });
     }
 
-    //crear una ruta por default para la sucursal
-    const rutaDefault = await ruta.createRuta({
-      
-      nombre_ruta: 'Sin Ruta',
-      descripcion: 'Ruta creada por defecto al crear la sucursal',
-      sucursal_id: nuevaSucursal.sucursal_id
+    return res.status(201).send({ 
+        message: 'Sucursal creada exitosamente (con Caja y Ruta inicial)',
+        sucursal: nuevaSucursal 
     });
 
-
-    return res.status(201).send({ message: 'Sucursal creada exitosamente' });
-
   } catch (error) {
+    console.error(error);
     res.status(500).send({ error: 'Error al crear la sucursal' });
   } 
 };
