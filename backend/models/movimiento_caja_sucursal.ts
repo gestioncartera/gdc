@@ -11,27 +11,55 @@ export interface MovimientoCajaSucursal {
     
 }
 
+// Crear movimiento y actualizar saldo automáticamente con una transacción
 export const createMovimientoCajaSucursal = async (movimiento: MovimientoCajaSucursal): Promise<MovimientoCajaSucursal> => {
-    const result = await db.query(
-        `INSERT INTO movimientos_caja_sucursal (
-            caja_sucursal_id,
-            usuario_responsable_id,
-            tipo_movimiento,
-            monto,
-            descripcion,
-            fecha_movimiento
-        ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [
-            movimiento.caja_sucursal_id,
+    const client = await db.connect();
+    
+    try {
+        await client.query('BEGIN');
+
+        // 1. Insertar Movimiento
+        const movtocaja= await client.query(`INSERT INTO movimientos_caja_sucursal (
+                caja_sucursal_id,
+                usuario_responsable_id,
+                tipo_movimiento,
+                monto,
+                descripcion,
+                fecha_movimiento
+            ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+             [movimiento.caja_sucursal_id,
             movimiento.usuario_responsable_id,
-            movimiento.tipo_movimiento ,// 'ingreso' o 'egreso'
+            movimiento.tipo_movimiento ,
             movimiento.monto,
             movimiento.descripcion,
-            movimiento.fecha_movimiento ||new Date().toISOString().slice(0, 10) // Solo la fecha sin hora
-        ]
-    );
-    return result.rows[0];
+            movimiento.fecha_movimiento || new Date().toISOString()]);
+
+
+
+        const nuevoMovimiento = movtocaja.rows[0];
+
+        // 2. Actualizar Saldo Caja
+        const updatecaja = await client.query(`UPDATE cajas_sucursales 
+            SET saldo_actual = saldo_actual + $2, 
+            fecha_ultima_actualizacion = NOW() 
+            WHERE caja_sucursal_id = $1 RETURNING *`,
+        [movimiento.caja_sucursal_id,
+            movimiento.monto,
+            movimiento.tipo_movimiento === 'ingreso' ? movimiento.monto : -movimiento.monto,
+        ]);
+       
+        await client.query('COMMIT');
+        return nuevoMovimiento;
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
 };
+
+
 
 export const getMovimientosByCajaSucursalId = async (caja_sucursal_id: number): Promise<MovimientoCajaSucursal[]> => {
     const result = await db.query(

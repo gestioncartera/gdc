@@ -22,7 +22,7 @@ export const createCajaSucursal = async (req: Request, res: Response): Promise<R
 return res.status(201).json(newCajaSucursal);
 
   } catch (error) {
-    console.log(error);
+    
     return res.status(500).json({ message: "Error al crear la caja de sucursal" });
   }
 };
@@ -30,14 +30,15 @@ return res.status(201).json(newCajaSucursal);
 // Obtener todas las cajas de sucursal
  export const getAllCajasSucursal = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const idsucursal=parseInt(req.params.sucursalId);
+    const idsucursal=parseInt(req.params.sucursal_id);
     const cajasSucursal = await CajaSucursal.getCajaSucursalBySucursalId(idsucursal);
     if (!cajasSucursal) {
       return res.status(404).send({ message: "No se encontraron cajas de sucursal" });
     }
     return res.status(200).json(cajasSucursal);
   } catch (error) {
-    return res.status(500).json({ message: "Error al obtener las cajas de sucursal" });
+    
+    return res.status(500).json({ message: "Error al obtener la caja de sucursal" });
   }
 };
 

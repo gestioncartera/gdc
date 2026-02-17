@@ -26,6 +26,7 @@ export const createCajaSucursal = async (caja: CajaSucursal): Promise<CajaSucurs
 
 // Obtener la caja de una sucursal por ID
 export const getCajaSucursalBySucursalId = async (sucursal_id: number): Promise<CajaSucursal | null> => {
+  
   const result = await db.query(`SELECT * FROM cajas_sucursales WHERE sucursal_id = $1`, 
     [sucursal_id]);
   return result.rows[0] || null;
