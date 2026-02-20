@@ -8,7 +8,7 @@ import { Request, Response } from "express";
 export const createPrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
     // 1. Validar solo lo necesario (quitamos valor_intereses porque lo calculamos nosotros)
-    if (!req.body.cliente_id || !req.body.periodo_id || !req.body.monto_prestamo || !req.body.tipo_prestamo_id) {
+    if (!req.body.cliente_id || !req.body.sucursal_id ||  !req.body.monto_prestamo || !req.body.tipo_prestamo_id || !req.body.id_usuario_creacion) {
       return res.status(400).json({ error: 'Faltan datos obligatorios para crear el préstamo' });
     }
 
@@ -39,6 +39,7 @@ export const createPrestamo = async (req: Request, res: Response): Promise<Respo
     : res.status(201).send({message:"Préstamo creado exitosamente"});
 
   } catch (error) {
+    console.error( error);
     return res.status(500).send({ error: 'Error al crear el préstamo' });
   }
 };

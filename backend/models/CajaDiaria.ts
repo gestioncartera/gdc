@@ -74,14 +74,16 @@ export const abrirCajaDiaria = async (caja: CajaDiaria, sucursal_id: number): Pr
         ruta_id, 
         fecha_apertura, 
         monto_base_inicial, 
+        monto_final_esperado,
         estado,
         created_at
-      ) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *`,
+      ) VALUES ($1, $2, $3, $4, $5, $6,NOW()) RETURNING *`,
       [
         caja.usuario_id,
         caja.ruta_id,
         caja.fecha_apertura || new Date().toISOString(),
         caja.monto_base_inicial,
+         caja.monto_base_inicial,
         'abierta'
       ]
     );

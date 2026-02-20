@@ -17,37 +17,107 @@ export interface Prestamo {
   id_usuario_creacion: number;
 }
 
-export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo| null> => {
-  const result = await db.query(
-    `INSERT INTO prestamos (cliente_id, 
-                            sucursal_id, 
-                            monto_prestamo, 
-                            fecha_desembolso, 
-                            estado_prestamo, 
-                            saldo_pendiente,
-                            created_at, 
-                            tipo_prestamo_id, 
-                            valor_intereses, 
-                            valor_cuota,
-                            fecha_fin_prestamo,
-                            id_usuario_creacion
-                             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-    [
-      prestamo.cliente_id,
-      prestamo.sucursal_id,  
-      prestamo.monto_prestamo,
-      prestamo.fecha_desembolso||new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),// new Date().toISOString().slice(0, 10),
-      prestamo.estado_prestamo||'pendiente',
-      prestamo.saldo_pendiente || prestamo.monto_prestamo,
-      prestamo.created_at || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),//new Date().toISOString().slice(0, 10),
-      prestamo.tipo_prestamo_id,
-      prestamo.valor_intereses,
-      prestamo.valor_cuota,
-      prestamo.fecha_fin_prestamo,
-      prestamo.id_usuario_creacion
-    ]
-  );
-  return result.rows[0];
+// Crear préstamo con validación de caja y registro de egreso (Transacción)
+export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo | null> => {
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. Verificar si el usuario tiene Caja Diaria ABIERTA
+    const resCaja = await client.query(
+      `SELECT caja_diaria_id, monto_final_esperado,ruta_id -- Asumiendo que tienes un campo saldo_final_esperado o similar calculado
+       FROM cajas_diarias 
+       WHERE usuario_id = $1 AND estado = 'abierta' 
+       FOR UPDATE`, // Bloqueamos la fila para evitar concurrencia
+      [prestamo.id_usuario_creacion]
+    );
+
+    if (resCaja.rowCount === 0) {
+      throw new Error('El usuario no tiene una caja diaria abierta para realizar desembolsos.');
+    }
+
+    const cajaDiaria = resCaja.rows[0];
+    
+    // *OPCIONAL*: Validar saldo suficiente en caja diaria (si manejas saldo en tiempo real)
+    if (cajaDiaria.saldo_final_esperado < prestamo.monto_prestamo) {
+       throw new Error('Saldo insuficiente en caja diaria para desembolsar este préstamo.');
+     }
+
+    // 2. Insertar el PRÉSTAMO
+    const resPrestamo = await client.query(
+      `INSERT INTO prestamos (
+          cliente_id, sucursal_id, monto_prestamo, fecha_desembolso, 
+          estado_prestamo, saldo_pendiente, created_at, tipo_prestamo_id, 
+          valor_intereses, valor_cuota, fecha_fin_prestamo, id_usuario_creacion
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
+       RETURNING *`,
+      [
+        prestamo.cliente_id,
+        prestamo.sucursal_id,
+        prestamo.monto_prestamo,
+        prestamo.fecha_desembolso || new Date(),
+        prestamo.estado_prestamo || 'pendiente',
+        prestamo.saldo_pendiente || prestamo.monto_prestamo, // Saldo inicial = Monto prestado
+        prestamo.created_at || new Date(),
+        prestamo.tipo_prestamo_id,
+        prestamo.valor_intereses,
+        prestamo.valor_cuota,
+        prestamo.fecha_fin_prestamo,
+        prestamo.id_usuario_creacion // Usamos el ID del usuario logueado
+      ]
+    );
+    
+    const nuevoPrestamo = resPrestamo.rows[0];
+
+    // 3. Registrar el desembolso como EGRESO en la Caja Sucursal (o Caja Diaria según tu modelo)
+    // Aquí registramos que salió dinero de la caja del usuario
+    await client.query(
+      `INSERT INTO egresos_operacion (
+          usuario_id, 
+          ruta_id, 
+          fecha_gasto, 
+          concepto, 
+          monto, 
+          descripcion, 
+          estado_egreso
+      ) VALUES (
+          ($1), 
+          ($2), 
+          ($3), 
+          ($4),
+          ($5),
+          ($6),
+          ($7)
+      )`,
+      [prestamo.id_usuario_creacion,
+        cajaDiaria.ruta_id, 
+        new Date(), 
+        'Desembolso Préstamo #' + nuevoPrestamo.prestamo_id,
+         prestamo.monto_prestamo, 
+         'Se realizo prestamo',
+         'confirmado'
+        ]
+    );
+
+    await client.query(
+      `UPDATE cajas_diarias
+       SET monto_final_esperado = monto_final_esperado  - $1
+       WHERE caja_diaria_id = $2 AND estado = 'abierta'`,
+      [prestamo.monto_prestamo, cajaDiaria.caja_diaria_id]
+    );
+
+   
+
+    await client.query('COMMIT');
+    return nuevoPrestamo;
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 // Obtener todos los préstamos
