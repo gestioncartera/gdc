@@ -26,4 +26,23 @@ const getMovimientosByCajaSucursalId = async (req: Request, res: Response) => {
     }
 };
 
-export default {createMovimientoCajaSucursal, getMovimientosByCajaSucursalId}
+const anularMovimientoCajaSucursal = async (req: Request, res: Response) => {
+    try {
+        const movimiento_id = parseInt(req.params.movimiento_id);
+        const movimientoAnulado = await movtoCajaSucursal.anularMovimientoCajaSucursal(movimiento_id);
+
+        if (!movimientoAnulado) {
+            return res.status(404).send({ error: 'Movimiento no encontrado' });
+        }
+
+        return res.status(200).json(movimientoAnulado);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send({ error: 'Error interno del servidor' });
+    }
+};
+
+export default {createMovimientoCajaSucursal,
+                 getMovimientosByCajaSucursalId, 
+                 anularMovimientoCajaSucursal
+                };

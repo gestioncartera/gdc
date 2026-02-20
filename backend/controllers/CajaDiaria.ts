@@ -1,14 +1,38 @@
 import  CajaDiaria  from "../models/CajaDiaria";
+import AsignacionRuta from "../models/AsignacionRuta";
 import { Request, Response } from "express";
 
 const createCajaDiaria = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const newCajaDiaria = await CajaDiaria.createCajaDiaria(req.body);
+    //obtener la ruta asignada al usuario para asociarla a la caja diaria
+    const usuario_id = req.body.usuario_id; 
+    const sucursal_id = parseInt(req.params.sucursal_id) ;
+
+    const rutaAsignada = await AsignacionRuta.getRutaAsignadaUsuario(usuario_id);
+    if (!rutaAsignada) {
+      return res.status(400).send({ error: 'El usuario no tiene una ruta asignada' });
+    }
+
+    //validar si ya existe una caja diaria abierta para el usuario 
+    const cajasAbiertas = await CajaDiaria.getCajaDiariaAbiertaByUsuario(usuario_id);
+    if (cajasAbiertas) {
+      return res.status(400).send({ error: 'El usuario ya tiene una caja diaria abierta' });
+    }
+
+    //validar si existe la cantidad de dinero en la caja principal
+    const existenFondos= await CajaDiaria.validarFondosCajaPrincipal(sucursal_id, req.body.monto_base_inicial);
+    if (!existenFondos) {
+      return res.status(400).send({ error: 'No hay suficientes fondos en la caja principal' });
+    }
+
+    req.body.ruta_id = rutaAsignada.ruta_id;
+
+    const newCajaDiaria = await CajaDiaria.abrirCajaDiaria(req.body, sucursal_id);
     return (!newCajaDiaria) 
     ? res.status(400).send({ error: 'No se pudo crear la caja diaria' }) 
     : res.status(201).json(newCajaDiaria);
   } catch (error) {
-    return res.status(500).json({ error: 'Error al crear la caja diaria' });
+    return res.status(500).send({ error: 'Error al crear la caja diaria' });
   }
 };
 

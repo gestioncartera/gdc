@@ -4,36 +4,100 @@ export interface CajaDiaria {
   caja_diaria_id?: number;
   usuario_id: number;
   ruta_id: number;
-  fecha_apertura: Date | string;
+  fecha_apertura?: Date | string;
   fecha_cierre?: Date | string;
   monto_base_inicial: number;
   monto_final_esperado?: number;
   monto_final_real?: number;
   diferencia?: number;
-  estado: string;
+  estado?:  string;
   created_at?: Date | string;
 }
 
-// Crear una nueva caja diaria
-export const createCajaDiaria = async (caja: CajaDiaria): Promise<CajaDiaria | null> => {
-  const result = await db.query(
-    `INSERT INTO cajas_diarias (
-      usuario_id, 
-      ruta_id, 
-      fecha_apertura, 
-      monto_base_inicial, 
-      estado
-    ) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [
-      caja.usuario_id,
-      caja.ruta_id,
-      caja.fecha_apertura || new Date().toISOString().slice(0, 10),
-      caja.monto_base_inicial,
-      caja.estado || 'abierta'
-    ]
-  );
-  return result.rows[0] || null;
-}
+// Crear apertura de caja diaria con transacción (Descuenta de Sucursal + Crea Caja Diaria)
+export const abrirCajaDiaria = async (caja: CajaDiaria, sucursal_id: number): Promise<CajaDiaria> => {
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. Verificar si la caja de sucursal tiene fondos suficientes
+    const resSaldo = await client.query(
+      `SELECT saldo_actual FROM cajas_sucursales WHERE sucursal_id = $1 FOR UPDATE`,
+      [sucursal_id]
+    );
+
+    if (resSaldo.rowCount === 0) {
+        throw new Error('Caja de sucursal no encontrada');
+    }
+
+    const saldoActual = parseFloat(resSaldo.rows[0].saldo_actual);
+    if (saldoActual < caja.monto_base_inicial) {
+         throw new Error('Fondos insuficientes en la caja principal de la sucursal');
+    }
+
+     //  Registrar también el egreso en 'movimientos_caja_sucursal' para auditoría
+    await client.query(
+      `INSERT INTO movimientos_caja_sucursal (
+        caja_sucursal_id,
+        usuario_responsable_id,
+        tipo_movimiento,
+        monto,
+        descripcion,
+        fecha_movimiento,
+        estado_movto
+      ) VALUES (
+        (SELECT caja_sucursal_id FROM cajas_sucursales WHERE sucursal_id = $1),
+        $2,
+        'egreso',
+        $3,
+        'Apertura de caja diaria',
+        NOW(),
+        'confirmado'
+      )`,
+      [sucursal_id, caja.usuario_id, caja.monto_base_inicial]
+    );
+
+    // 2. Descontar el monto inicial de la Caja Sucursal
+    await client.query(
+      `UPDATE cajas_sucursales 
+       SET saldo_actual = saldo_actual - $1, 
+           fecha_ultima_actualizacion = NOW()
+       WHERE sucursal_id = $2`,
+      [caja.monto_base_inicial, sucursal_id]
+    );
+
+    // 3. Crear el registro en Caja Diaria
+    const resCajaDiaria = await client.query(
+      `INSERT INTO cajas_diarias (
+        usuario_id, 
+        ruta_id, 
+        fecha_apertura, 
+        monto_base_inicial, 
+        estado,
+        created_at
+      ) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *`,
+      [
+        caja.usuario_id,
+        caja.ruta_id,
+        caja.fecha_apertura || new Date().toISOString(),
+        caja.monto_base_inicial,
+        'abierta'
+      ]
+    );
+
+    const nuevaCajaDiaria = resCajaDiaria.rows[0];
+
+    await client.query('COMMIT');
+    return nuevaCajaDiaria;
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
 
 // Obtener todas las cajas diarias
 export const getAllCajasDiarias = async (): Promise<CajaDiaria[] | null> => {
@@ -41,7 +105,7 @@ export const getAllCajasDiarias = async (): Promise<CajaDiaria[] | null> => {
   return result.rows || null;
 }
 
-// Obtener una caja diaria por ID
+// Obtener una caja diaria por ID CajaDiaria
 export const getCajaDiariaById = async (id: number): Promise<CajaDiaria | null> => {
   const result = await db.query(`SELECT * FROM cajas_diarias WHERE caja_diaria_id = $1`, [id]);
   return result.rows[0] || null;
@@ -51,6 +115,12 @@ export const getCajaDiariaById = async (id: number): Promise<CajaDiaria | null> 
 export const getCajasDiariasByUsuario = async (usuario_id: number): Promise<CajaDiaria[] | null> => {
   const result = await db.query(`SELECT * FROM cajas_diarias WHERE usuario_id = $1 ORDER BY created_at DESC`, [usuario_id]);
   return result.rows || null;
+}
+
+//obtener caja abierta de un usuario
+export const getCajaDiariaAbiertaByUsuario = async (usuario_id: number): Promise<CajaDiaria | null> => {
+  const result = await db.query(`SELECT * FROM cajas_diarias WHERE usuario_id = $1 AND estado = 'abierta'`, [usuario_id]);
+  return result.rows[0] || null;
 }
 
 // Obtener cajas por ruta
@@ -86,6 +156,14 @@ export const updateCajaDiaria = async (id: number, caja: Partial<CajaDiaria>): P
   );
   return result.rows[0] || null;
 }
+//validar fondos en la caja principal
+export const validarFondosCajaPrincipal = async (sucursal_id: number, monto_requerido: number): Promise<boolean> => {
+  const result = await db.query(`SELECT saldo_actual 
+    FROM cajas_sucursales  WHERE sucursal_id = $1`, [sucursal_id]);
+  const saldoActual = result.rows[0]?.saldo_actual || 0;
+  return saldoActual >= monto_requerido;
+}
+
 
 // Eliminar una caja diaria
 export const deleteCajaDiaria = async (id: number): Promise<void> => {
@@ -93,11 +171,13 @@ export const deleteCajaDiaria = async (id: number): Promise<void> => {
 }
 
 export default {
-  createCajaDiaria,
+  abrirCajaDiaria,
   getAllCajasDiarias,
   getCajaDiariaById,
   getCajasDiariasByUsuario,
   getCajasDiariasByRuta,
+  getCajaDiariaAbiertaByUsuario,
   updateCajaDiaria,
-  deleteCajaDiaria
+  deleteCajaDiaria,
+  validarFondosCajaPrincipal
 };

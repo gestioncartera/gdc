@@ -12,7 +12,7 @@ import TipoPrestamo from './routes/TipoPrestamo';
 import AsignacionRuta from './routes/AsignacionRuta';
 import prestamo from './routes/prestamo';
 import cobro from './routes/cobro';
-import GastoOperacion from './routes/GastoOperacion';
+import EgresoOperacion from './routes/EgresoOperacion';
 import CajaSucursal from './routes/CajaSucursal';
 import movtoCajaSucursal from './routes/movimiento_caja_sucursal';
 
@@ -32,7 +32,7 @@ app.use('/api/tipoprestamo', TipoPrestamo);
 app.use('/api/asignacionruta', AsignacionRuta);
 app.use('/api/prestamo', prestamo);
 app.use('/api/cobro', cobro);
-app.use('/api/gastooperacion', GastoOperacion);
+app.use('/api/egresooperacion', EgresoOperacion);
 app.use('/api/cajasucursal', CajaSucursal);
 app.use('/api/movimientocajasucursal', movtoCajaSucursal);
 

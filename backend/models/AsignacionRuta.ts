@@ -42,6 +42,16 @@ export const deleteAsignacionRuta = async (id: number): Promise<AsignacionRuta |
   return deletedAsignacionRuta.rows[0] || null;
 };
 
+//obtener ruta asignada a un usuario
+export const getRutaAsignadaUsuario = async (usuario_id: number): Promise<AsignacionRuta | null> => {
+  const result = await db.query(
+    'SELECT ruta_id FROM asignaciones_rutas WHERE usuario_id = $1 AND estado = $2',
+    [usuario_id, 'activo']
+  );
+  return result.rows[0] || null;
+};
+
+
 // Actualizar asignación de ruta
 export const updateAsignacionRuta = async (id: number, asignacionRuta: AsignacionRuta): Promise<AsignacionRuta | null> => {
   const updatedAsignacionRuta = await db.query(
@@ -127,6 +137,7 @@ export const asignarRutaSegura = async (asignacionRuta: AsignacionRuta): Promise
 export default {
   createAsignacionRuta,
   getAsignacionesRuta,
+  getRutaAsignadaUsuario,
   deleteAsignacionRuta,
   updateAsignacionRuta,
   isRutaAsignada,
