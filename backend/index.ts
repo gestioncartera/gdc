@@ -15,6 +15,7 @@ import cobro from './routes/cobro';
 import EgresoOperacion from './routes/EgresoOperacion';
 import CajaSucursal from './routes/CajaSucursal';
 import movtoCajaSucursal from './routes/movimiento_caja_sucursal';
+import CajaDiaria  from './routes/CajaDiaria';
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use('/api/cobro', cobro);
 app.use('/api/egresooperacion', EgresoOperacion);
 app.use('/api/cajasucursal', CajaSucursal);
 app.use('/api/movimientocajasucursal', movtoCajaSucursal);
+app.use('/api/cajadiaria', CajaDiaria);
 
 app.listen(process.env.PORT,()=>console.log(`Server running on port ${process.env.PORT}`));
 

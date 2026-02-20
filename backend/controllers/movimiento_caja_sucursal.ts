@@ -21,7 +21,7 @@ const getMovimientosByCajaSucursalId = async (req: Request, res: Response) => {
         const movimientos = await movtoCajaSucursal.getMovimientosByCajaSucursalId(caja_sucursal_id);
         return res.status(200).json(movimientos);
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).send({ error: 'Error interno del servidor' });
     }
 };

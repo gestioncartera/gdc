@@ -2,7 +2,7 @@ import  CajaDiaria  from "../models/CajaDiaria";
 import AsignacionRuta from "../models/AsignacionRuta";
 import { Request, Response } from "express";
 
-const createCajaDiaria = async (req: Request, res: Response): Promise<Response> => {
+const abrirCajaDiaria = async (req: Request, res: Response): Promise<Response> => {
   try {
     //obtener la ruta asignada al usuario para asociarla a la caja diaria
     const usuario_id = req.body.usuario_id; 
@@ -106,7 +106,7 @@ export const updateCajaDiaria = async (req: Request, res: Response): Promise<Res
 };
 
 export default {
-  createCajaDiaria,
+  abrirCajaDiaria,
   getAllCajasDiarias,
   getCajaDiariaById,
   getCajasDiariasByUsuario,

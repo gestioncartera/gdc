@@ -14,6 +14,7 @@ export interface Prestamo {
   valor_intereses: number;
   valor_cuota?: number;
   fecha_fin_prestamo?: Date;
+  id_usuario_creacion: number;
 }
 
 export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo| null> => {
@@ -28,7 +29,9 @@ export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo| null
                             tipo_prestamo_id, 
                             valor_intereses, 
                             valor_cuota,
-                            fecha_fin_prestamo ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+                            fecha_fin_prestamo,
+                            id_usuario_creacion
+                             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
     [
       prestamo.cliente_id,
       prestamo.sucursal_id,  
@@ -40,7 +43,8 @@ export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo| null
       prestamo.tipo_prestamo_id,
       prestamo.valor_intereses,
       prestamo.valor_cuota,
-      prestamo.fecha_fin_prestamo
+      prestamo.fecha_fin_prestamo,
+      prestamo.id_usuario_creacion
     ]
   );
   return result.rows[0];
