@@ -96,7 +96,7 @@ export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo | nul
         'Desembolso Préstamo #' + nuevoPrestamo.prestamo_id,
          prestamo.monto_prestamo, 
          'Se realizo prestamo',
-         'confirmado'
+         'pendiente'
         ]
     );
 

@@ -15,6 +15,7 @@ router.get('/getUsuarioById/:id', auth, usuario.getUsuarioById);
 router.get('/getUsuarioByDNI/:dni', auth, usuario.getUsuarioByDNI);
 router.patch('/updatePassword/:id', auth, usuario.updatePassword);
 router.put('/updateUsuario/:id', auth, usuario.updateUsuario);
+router.get('/getCobradoresActivos/:idSucursal', auth, usuario.getCobradoresActivos);
 router.delete('/deleteUsuario/:id', auth, usuario.deleteUsuario);
 
 export default router;

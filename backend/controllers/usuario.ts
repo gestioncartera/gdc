@@ -135,6 +135,19 @@ export const deleteUsuario = async (req: Request, res: Response) => {
   }
 };
 
+//obtener cobradores activos y con ruta asignada
+export const getCobradoresActivos = async (req: Request, res: Response) => {
+  try {    const idSucursal = parseInt(req.params.idSucursal);
+    const cobradores = await usuario.getCobradoresActivos(idSucursal);
+    return cobradores.length === 0
+      ? res.status(404).send({ message: "No se encontraron cobradores activos con ruta asignada" })
+      : res.status(200).json(cobradores);
+  } catch (error) {
+  
+    res.status(500).send({ error: "Error al obtener los cobradores activos con ruta asignada" });
+  }
+}
+
 //Login usuario
 export const login = async (req: Request, res: Response) => {
   try {
@@ -189,6 +202,7 @@ export default {
   getUsuarioByDNI,
   updateUsuario,
   deleteUsuario,
+  getCobradoresActivos,
   login,
   updatePassword,
 };

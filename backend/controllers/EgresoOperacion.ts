@@ -1,4 +1,5 @@
 import EgresoOperacion from "../models/EgresoOperacion";
+import AsignacionRuta from "../models/AsignacionRuta";
 import { Request, Response } from "express";
 
 // Crear egreso de operación
@@ -19,11 +20,14 @@ export const createEgresoOperacion = async (req: Request, res: Response): Promis
 export const getAllEgresosOperacionPendientes = async (req: Request, res: Response): Promise<Response> => {
   try {
     const  usuario_id   = parseInt(req.body.usuario_id);
-    const  ruta_id   = parseInt(req.body.ruta_id);
-    if (!usuario_id || !ruta_id) {
+     if (!usuario_id ) {
       return res.status(400).send({ error: 'Faltan parámetros requeridos' });
     }
-    const egresosOperacion = await EgresoOperacion.getAllEgresosOperacionPendientes(usuario_id, ruta_id);
+    const  ruta_id   = await AsignacionRuta.getRutaAsignadaUsuario(usuario_id); // Obtener la ruta asignada al usuario
+    if (!ruta_id) {
+      return res.status(400).send({ error: 'El cobrador no tiene ruta asignada' });
+    }
+    const egresosOperacion = await EgresoOperacion.getAllEgresosOperacionPendientes(usuario_id, ruta_id.ruta_id);
     return res.status(200).json(egresosOperacion);
   } catch (error) {
     return res.status(500).send({ error: 'Error al obtener los egresos de operación' });

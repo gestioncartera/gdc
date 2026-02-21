@@ -78,7 +78,7 @@ export const getMovimientosByCajaSucursalId = async (caja_sucursal_id: number): 
 export const anularMovimientoCajaSucursal = async (movimiento_id: number): Promise<MovimientoCajaSucursal | null> => {
     const result = await db.query(
         `UPDATE movimientos_caja_sucursal 
-        SET estado_movto = 'anulado', fecha_movimiento = NOW()
+        SET estado_movto = 'anulado'
         WHERE movimiento_id = $1 RETURNING *`,
         [movimiento_id]
     );

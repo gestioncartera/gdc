@@ -109,6 +109,17 @@ export const getUsuarioByEmail = async (email: string): Promise<Usuario | null> 
   return result.rows[0] || null;
 }
 
+//obtener cobradores activos y con ruta asignada
+export const getCobradoresActivos = async (idSucursal: number): Promise<Usuario[]> => {
+  const result = await db.query(
+    `SELECT u.* FROM usuarios u
+     inner JOIN asignaciones_rutas ar ON u.usuario_id = ar.usuario_id and ar.estado = 'activo'
+     WHERE u.sucursal_id = $1  AND u.tipo_usuario = 2 AND u.estado = 'activo' order by u.usuario_id asc`,
+    [idSucursal]
+  );
+  return result.rows;
+}
+
 
 
 export default {
@@ -119,5 +130,6 @@ export default {
   getUsuarioByEmail,
   updateUsuario,
   updatePassword,
-  deleteUsuario
+  deleteUsuario,
+  getCobradoresActivos
 };
