@@ -10,6 +10,7 @@ export const createEgresoOperacion = async (req: Request, res: Response): Promis
     ? res.status(500).send({ error: 'No se pudo crear el egreso de operación' }) 
     : res.status(201).json(newEgresoOperacion);
   } catch (error) {
+    console.error(error);
     return res.status(500).send({ error: 'Error al crear el egreso de operación' });
   }
 };

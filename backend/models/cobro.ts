@@ -11,19 +11,59 @@ export interface Cobro {
   created_at?: Date;
 } 
 
-// Crear un nuevo cobro
+// Crear cobro y actualizar caja diaria (Transacción)
 export const createCobro = async (cobro: Cobro): Promise<Cobro | null> => {
-  const result = await db.query(
-    `INSERT INTO cobros (prestamo_id, usuario_id, fecha_cobro, monto_cobrado, estado) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [
-      cobro.prestamo_id,
-      cobro.usuario_id,
-      cobro.fecha_cobro || new Date().toISOString().slice(0, 10),
-      cobro.monto_cobrado,
-      cobro.estado || 'pendiente',
-    ]
-  );
-  return result.rows[0] || null;
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. Verificar Caja Diaria ABIERTA del usuario
+    const resCaja = await client.query(
+      `SELECT caja_diaria_id FROM cajas_diarias 
+       WHERE usuario_id = $1 AND estado = 'abierta' FOR UPDATE`,
+      [cobro.usuario_id]
+    );
+
+    if (resCaja.rowCount === 0) {
+      throw new Error('No tienes una caja diaria abierta para registrar cobros.');
+    }
+    const cajaId = resCaja.rows[0].caja_diaria_id;
+
+    // 2. Insertar el Cobro
+    const resCobro = await client.query(
+      `INSERT INTO cobros (prestamo_id, usuario_id, fecha_cobro, monto_cobrado, estado) 
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [
+        cobro.prestamo_id,
+        cobro.usuario_id,
+        cobro.fecha_cobro || new Date().toISOString(),
+        cobro.monto_cobrado,
+        cobro.estado || 'pendiente' // Asumo 'confirmado' si ya entra dinero
+      ]
+    );
+    const nuevoCobro = resCobro.rows[0];
+
+    // 3. Actualizar monto_final_esperado en Caja Diaria
+    // Se usa COALESCE para tratar nulos como 0 si es la primera suma
+    await client.query(
+      `UPDATE cajas_diarias 
+       SET monto_final_esperado = COALESCE(monto_final_esperado, 0) + $1
+       WHERE caja_diaria_id = $2`,
+      [cobro.monto_cobrado, 
+        cajaId]
+    );
+
+
+    await client.query('COMMIT');
+    return nuevoCobro;
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 // Obtener todos los cobros
