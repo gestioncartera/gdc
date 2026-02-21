@@ -14,7 +14,7 @@ const abrirCajaDiaria = async (req: Request, res: Response): Promise<Response> =
     }
 
     //validar si ya existe una caja diaria abierta para el usuario 
-    const cajasAbiertas = await CajaDiaria.getCajaDiariaAbiertaByUsuario(usuario_id);
+    const cajasAbiertas = await CajaDiaria.getCajaDiariaAbiertaByUsuario(usuario_id,rutaAsignada.ruta_id);
     if (cajasAbiertas) {
       return res.status(400).send({ error: 'El usuario ya tiene una caja diaria abierta' });
     }
@@ -68,11 +68,28 @@ export const getCajasDiariasByUsuario = async (req: Request, res: Response): Pro
     const usuario_id = parseInt(req.params.usuario_id);
     const cajasDiarias = await CajaDiaria.getCajasDiariasByUsuario(usuario_id);
     if (!cajasDiarias) {
-      return res.status(404).json({ error: 'No se encontraron cajas diarias para el usuario especificado' });
+      return res.status(404).send({ error: 'No se encontraron cajas diarias para el usuario especificado' });
     }
     return res.status(200).json(cajasDiarias);
   } catch (error) {
-    return res.status(500).json({ error: 'Error al obtener las cajas diarias por usuario' });
+    return res.status(500).send({ error: 'Error al obtener las cajas diarias por usuario' });
+  }
+};
+
+export const getCajaDiariaAbiertaByUsuario = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const usuario_id = parseInt(req.params.usuario_id);
+    const rutaAsignada = await AsignacionRuta.getRutaAsignadaUsuario(usuario_id);
+    if (!rutaAsignada) {
+      return res.status(404).send({ error: 'No se encontro ruta asignada para el usuario especificado' });
+    }
+    const cajaDiariaAbierta = await CajaDiaria.getCajaDiariaAbiertaByUsuario(usuario_id, rutaAsignada.ruta_id);
+    if (!cajaDiariaAbierta) {
+      return res.status(404).send({ error: 'No se encontró una caja diaria abierta para el usuario especificado' });
+    }
+    return res.status(200).json(cajaDiariaAbierta);
+  } catch (error) {
+    return res.status(500).send({ error: 'Error al obtener la caja diaria abierta por usuario' });
   }
 };
 
@@ -111,5 +128,6 @@ export default {
   getCajaDiariaById,
   getCajasDiariasByUsuario,
   getCajasDiariasByRuta,
+  getCajaDiariaAbiertaByUsuario,
   updateCajaDiaria
 };

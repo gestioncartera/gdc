@@ -1,15 +1,22 @@
 import AsignacionRuta from "../models/AsignacionRuta";
 import { Request, Response } from "express";
+import CajaDiaria from "../models/CajaDiaria";
 
 // Crear asignación de ruta
 export const createAsignacionRuta = async (req: Request, res: Response): Promise<Response> => {
   try {
      
-    // Verificar si YA tienen exactamente esa asignación activa (pura lectura, rápido)
+    // Verificar si YA tienen exactamente esa asignación activa 
     const existeRutaAsignada = await AsignacionRuta.isRutaAsignada(req.body.ruta_id, req.body.usuario_id);
     if (existeRutaAsignada) {
-       // Opción A: Devolver error o mensaje de que ya está lista
-      return res.status(400).json({ error: 'La ruta ya está asignada a este usuario correctamente' });
+       // Devolver error o mensaje de que ya está lista
+      return res.status(400).send({ error: 'La ruta ya está asignada a este usuario' });
+    }
+
+    //Validar que cobrador no tenga caja abierta
+    const cajaAbierta= await  CajaDiaria.getCajasDiariasByUsuario(req.body.usuario_id);
+    if(cajaAbierta && cajaAbierta.length > 0){
+      return res.status(400).send({ error: 'El usuario tiene una caja abierta, cierre la caja antes de asignar una nueva ruta' });
     }
 
     // Usar la transacción segura del modelo para limpiar conflictos y crear

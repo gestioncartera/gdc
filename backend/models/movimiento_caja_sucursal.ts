@@ -65,6 +65,7 @@ export const createMovimientoCajaSucursal = async (movimiento: MovimientoCajaSuc
 
 
 
+
 export const getMovimientosByCajaSucursalId = async (caja_sucursal_id: number): Promise<MovimientoCajaSucursal[]> => {
     const result = await db.query(
         `SELECT * FROM movimientos_caja_sucursal

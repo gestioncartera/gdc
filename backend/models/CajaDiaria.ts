@@ -115,13 +115,18 @@ export const getCajaDiariaById = async (id: number): Promise<CajaDiaria | null> 
 
 // Obtener cajas por usuario
 export const getCajasDiariasByUsuario = async (usuario_id: number): Promise<CajaDiaria[] | null> => {
-  const result = await db.query(`SELECT * FROM cajas_diarias WHERE usuario_id = $1 ORDER BY created_at DESC`, [usuario_id]);
+  const result = await db.query(`SELECT * FROM cajas_diarias 
+    WHERE usuario_id = $1 AND estado = 'abierta'`, 
+    [usuario_id]);
   return result.rows || null;
 }
 
 //obtener caja abierta de un usuario
-export const getCajaDiariaAbiertaByUsuario = async (usuario_id: number): Promise<CajaDiaria | null> => {
-  const result = await db.query(`SELECT * FROM cajas_diarias WHERE usuario_id = $1 AND estado = 'abierta'`, [usuario_id]);
+export const getCajaDiariaAbiertaByUsuario = async (usuario_id: number,ruta_id: number): Promise<CajaDiaria | null> => {
+  const result = await db.query(`SELECT * 
+    FROM cajas_diarias 
+    WHERE usuario_id = $1 AND ruta_id = $2 AND estado = 'abierta'`, 
+    [usuario_id, ruta_id]);
   return result.rows[0] || null;
 }
 

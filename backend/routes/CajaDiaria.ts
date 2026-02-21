@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.post('/abrirCajaDiaria/:sucursal_id', CajaDiaria.abrirCajaDiaria);
 router.get('/getCajasDiarias', auth, CajaDiaria.getAllCajasDiarias);
+router.get('/getCajaDiariaAbiertaByUsuario/:usuario_id', auth, CajaDiaria.getCajaDiariaAbiertaByUsuario);
 router.put('/updateCajaDiaria/:id', auth, CajaDiaria.updateCajaDiaria);
 router.delete('/deleteCajaDiaria/:id', auth, CajaDiaria.getCajaDiariaById);
 
