@@ -19,6 +19,12 @@ export const createAsignacionRuta = async (req: Request, res: Response): Promise
       return res.status(400).send({ error: 'El usuario tiene una caja abierta, cierre la caja antes de asignar una nueva ruta' });
     }
 
+    //validar que ruta no tenga asociada una caja abierta
+    const cajaAbiertaRuta= await  CajaDiaria.getCajasDiariasByRuta(req.body.ruta_id);
+    if(cajaAbiertaRuta && cajaAbiertaRuta.length > 0){
+      return res.status(400).send({ error: 'La ruta tiene una caja abierta, cierre la caja antes de asignar la ruta' });
+    }
+
     // Usar la transacción segura del modelo para limpiar conflictos y crear
     const newAsignacionRuta = await AsignacionRuta.asignarRutaSegura(req.body);
 

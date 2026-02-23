@@ -19,7 +19,7 @@ export const createEgresoOperacion = async (req: Request, res: Response): Promis
 // Obtener todos los egresos de operación pendientes
 export const getAllEgresosOperacionPendientes = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const  usuario_id   = parseInt(req.body.usuario_id);
+    const  usuario_id   = parseInt(req.params.usuario_id);
      if (!usuario_id ) {
       return res.status(400).send({ error: 'Faltan parámetros requeridos' });
     }

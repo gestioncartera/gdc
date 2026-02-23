@@ -132,7 +132,10 @@ export const getCajaDiariaAbiertaByUsuario = async (usuario_id: number,ruta_id: 
 
 // Obtener cajas por ruta
 export const getCajasDiariasByRuta = async (ruta_id: number): Promise<CajaDiaria[] | null> => {
-  const result = await db.query(`SELECT * FROM cajas_diarias WHERE ruta_id = $1 ORDER BY created_at DESC`, [ruta_id]);
+  const result = await db.query(`SELECT * FROM cajas_diarias 
+    WHERE ruta_id = $1 and estado = 'abierta'
+     ORDER BY created_at DESC`, 
+     [ruta_id]);
   return result.rows || null;
 }
 

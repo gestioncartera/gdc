@@ -37,7 +37,7 @@ export const createCobro = async (cobro: Cobro): Promise<Cobro | null> => {
       [
         cobro.prestamo_id,
         cobro.usuario_id,
-        cobro.fecha_cobro || new Date().toISOString(),
+        cobro.fecha_cobro || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
         cobro.monto_cobrado,
         cobro.estado || 'pendiente' // Asumo 'confirmado' si ya entra dinero
       ]
