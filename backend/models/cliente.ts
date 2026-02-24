@@ -60,6 +60,25 @@ export async function getClientesBySucursal(sucursal_id: number): Promise<Client
   return result.rows;
 }
 
+//obtener clientes que tienen prestamos activos
+export async function getClientesConPrestamosActivos(sucursal_id: number): Promise<Cliente[]> {
+  const result = await db.query(`SELECT distinct clientes.cliente_id,
+     clientes.Nombres ||' '||  clientes.Apellidos AS nombreCliente,
+     clientes.numero_identificacion AS numero_identificacion,
+    clientes.direccion AS direccionCliente,
+    clientes.telefono AS telefonoCliente,
+    clientes.fecha_registro AS fechaRegistro,
+      clientes.estado AS estadoCliente,
+      clientes.id_ruta AS idRuta,
+      clientes.sucursal_id AS sucursalId,
+      clientes.orden_ruta AS ordenRuta
+    FROM clientes
+    inner join prestamos on clientes.cliente_id = prestamos.cliente_id and prestamos.estado_prestamo='en curso'
+    WHERE clientes.sucursal_id = $1`,
+    [sucursal_id]);
+  return result.rows;
+}
+
 export async function getClientesByRuta(id_ruta: number): Promise<Cliente[]> {
   const result = await db.query('SELECT * FROM clientes WHERE id_ruta = $1 order by orden_ruta asc',
     [id_ruta]);
@@ -140,6 +159,7 @@ export default{
   getClientesBySucursal,
   getClientesByRuta,
   getClientesByUser,
+  getClientesConPrestamosActivos,
   updateCliente,
   deleteCliente,
   actualizarOrdenClientes

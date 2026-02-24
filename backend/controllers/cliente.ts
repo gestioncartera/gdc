@@ -110,6 +110,20 @@ const getClientesByUser = async (req: Request, res: Response) => {
     }
 };
 
+//listar clientes con prestamos activos
+const getClientesConPrestamosActivos = async (req: Request, res: Response) => {
+    try {
+        const sucursal_id = parseInt(req.params.sucursal_id);
+        const clientesEncontrado = await cliente.getClientesConPrestamosActivos(sucursal_id);
+        return clientesEncontrado.length===0
+        ? res.status(404).send({ message: 'No hay clientes con prestamos activos' })
+        : res.status(200).json(clientesEncontrado);
+    }
+        catch (error) {
+        return res.status(500).send({ error: 'Error al obtener el cliente' });
+    }
+};
+
 //actualizar un cliente
 const updateCliente = async (req: Request, res: Response) => {
     try {
@@ -171,6 +185,7 @@ export default{
     getClientesBySucursal,
     getClientesByRuta,
     getClientesByUser,
+    getClientesConPrestamosActivos,
     updateCliente,
     deleteCliente,
     actualizarOrdenClientes

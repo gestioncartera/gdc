@@ -188,19 +188,17 @@ export const validarMultiplesCobros = async (req: Request, res: Response): Promi
     //console.log('Request body recibido en validarMultiplesCobros:', req.body.cobroIds);
 
     const ids: number[] = req.body.cobroIds.map(Number);
-    const  cobroIds : any[] = await cobro.getCobrosByIds(ids ) ;// Espera un JSON { "cobroIds": [1, 2, 3] }
-
-    if (!Array.isArray(cobroIds) || cobroIds.length === 0) {
-      return res.status(400).json({ error: 'Se requiere un array de "cobroIds" no vacío.' });
+   
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'No esta enviando cobros para validar .' });
     }
-//console.log(req.body);
-    const resultado = await cobro.validarMultiplesCobros(cobroIds);
+    const resultado = await cobro.validarMultiplesCobros(ids);
 
     // Respuesta con resumen de lo que pasó
     return res.status(200).json({
       message: 'Proceso de validación finalizado',
       resumen: {
-        total_recibidos: cobroIds.length,
+        total_recibidos: ids.length,
         total_procesados: resultado.procesados.length,
         total_errores: resultado.errores.length
       },
