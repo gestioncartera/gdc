@@ -174,6 +174,16 @@ export const validarFondosCajaPrincipal = async (sucursal_id: number, monto_requ
   return saldoActual >= monto_requerido;
 }
 
+//actualizar la base de la caja diaria 
+export const updateBase = async (caja_diaria_id: number, nuevoMontoBase: number): Promise<CajaDiaria | null> => {
+  const result = await db.query(
+    `UPDATE cajas_diarias SET monto_base_inicial = monto_base_inicial + $1 ,
+      monto_final_esperado = monto_final_esperado + $1
+    WHERE caja_diaria_id = $2 RETURNING *`,
+    [nuevoMontoBase, caja_diaria_id]
+  );
+  return result.rows[0] || null;
+}
 
 // Eliminar una caja diaria
 export const deleteCajaDiaria = async (id: number): Promise<void> => {
@@ -188,6 +198,7 @@ export default {
   getCajasDiariasByRuta,
   getCajaDiariaAbiertaByUsuario,
   updateCajaDiaria,
+  updateBase,
   deleteCajaDiaria,
   validarFondosCajaPrincipal
 };

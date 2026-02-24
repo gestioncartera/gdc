@@ -107,6 +107,22 @@ export const getCajasDiariasByRuta = async (req: Request, res: Response): Promis
     }
 };
 
+//actualizar la base de la caja diaria
+export const updateBase = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const caja_diaria_id = parseInt(req.params.caja_diaria_id);
+    const  nuevoMontoBase  = req.body.nuevaBase;
+    const updatedCajaDiaria = await CajaDiaria.updateBase(caja_diaria_id, nuevoMontoBase);
+    if (!updatedCajaDiaria) {
+      return res.status(404).send({ error: 'Caja diaria no encontrada' });
+    }
+    return res.status(200).json(updatedCajaDiaria);
+  } catch (error) {
+    
+    return res.status(500).send({ error: 'Error al actualizar la caja diaria' });
+  }
+}
+
 // Actualizar caja diaria
 export const updateCajaDiaria = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -129,5 +145,6 @@ export default {
   getCajasDiariasByUsuario,
   getCajasDiariasByRuta,
   getCajaDiariaAbiertaByUsuario,
-  updateCajaDiaria
+  updateCajaDiaria,
+  updateBase
 };
