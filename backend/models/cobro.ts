@@ -132,11 +132,11 @@ export const getCobrosByRutaId = async (ruta_id: number): Promise<Cobro[]|any> =
     c.monto_cobrado,
     c.estado
     FROM asignaciones_rutas ar
-    left join usuarios u on ar.usuario_id = u.usuario_id
+    inner join usuarios u on ar.usuario_id = u.usuario_id
     inner join cobros c on u.usuario_id = c.usuario_id and c.estado='pendiente'
     inner join prestamos p on c.prestamo_id = p.prestamo_id
     inner join clientes cl on p.cliente_id = cl.cliente_id
-    WHERE ar.ruta_id = $1 
+    WHERE ar.ruta_id = $1  and ar.estado='activo'
     order by cl.cliente_id,c.fecha_cobro desc`,
      [ruta_id]);//and ar.estado='activo'
   return result.rows || null;
