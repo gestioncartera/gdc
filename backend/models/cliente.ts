@@ -63,17 +63,18 @@ export async function getClientesBySucursal(sucursal_id: number): Promise<Client
 //obtener clientes que tienen prestamos activos
 export async function getClientesConPrestamosActivos(sucursal_id: number): Promise<Cliente[]> {
   const result = await db.query(`SELECT distinct clientes.cliente_id,
-     clientes.Nombres ||' '||  clientes.Apellidos AS nombreCliente,
+     clientes.Nombres ||' '||  clientes.Apellidos AS Nombres,
      clientes.numero_identificacion AS numero_identificacion,
-    clientes.direccion AS direccionCliente,
-    clientes.telefono AS telefonoCliente,
-    clientes.fecha_registro AS fechaRegistro,
-      clientes.estado AS estadoCliente,
-      clientes.id_ruta AS idRuta,
-      clientes.sucursal_id AS sucursalId,
-      clientes.orden_ruta AS ordenRuta
+    clientes.direccion AS direccion,
+    clientes.telefono AS telefono,
+    clientes.fecha_registro AS fecha_registro,
+      clientes.estado AS estado,
+      clientes.id_ruta AS id_ruta,
+      clientes.sucursal_id AS sucursal_id,
+      clientes.orden_ruta AS orden_ruta
     FROM clientes
-    inner join prestamos on clientes.cliente_id = prestamos.cliente_id and prestamos.estado_prestamo='en curso'
+    inner join prestamos on clientes.cliente_id = prestamos.cliente_id 
+    and prestamos.estado_prestamo='en curso'
     WHERE clientes.sucursal_id = $1`,
     [sucursal_id]);
   return result.rows;

@@ -199,9 +199,9 @@ export const deleteCobro = async (cobro_id: number): Promise<Cobro | null> => {
 
 // Validar un cobro y actualizar el saldo del préstamo asociado
 // Validar Múltiples Cobros (Versión Optimizada)
+// Validar Múltiples Cobros (Versión Optimizada)
 export async function validarMultiplesCobros(cobroIds: number[]) {
   const client = await db.connect();
-  let totalIngreso: number = 0;
   const resultados = {
     procesados: [] as number[],
     errores: [] as { id: number, motivo: string }[]
@@ -213,30 +213,13 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
     // 1. Obtener todos los datos necesarios en UNA sola consulta
     // Esto reduce drásticamente el tiempo
     const cobrosQuery = await client.query(
-      `SELECT c.cobro_id, c.monto_cobrado, c.prestamo_id, c.estado ,c.usuario_id
+      `SELECT c.cobro_id, c.monto_cobrado, c.prestamo_id, c.estado 
        FROM cobros c 
        WHERE c.cobro_id = ANY($1) FOR UPDATE`,
       [cobroIds]
     );
-    const cobrador_id= cobrosQuery.rows[0]?.usuario_id; // Asumimos que todos los cobros son del mismo usuario, si no habría que validar eso también
+
     const cobrosAProcesar = cobrosQuery.rows;
-
-      const resCajaSucursal = await client.query(
-                `SELECT cs.caja_sucursal_id as caja_sucursal_id 
-                FROM prestamos 
-                inner join sucursales s on prestamos.sucursal_id = s.sucursal_id
-                inner join cajas_sucursales cs on s.sucursal_id = cs.sucursal_id
-                WHERE prestamo_id = ANY($1) 
-                group by cs.caja_sucursal_id`,
-                [cobrosAProcesar.map(c => c.prestamo_id)]
-            );
-            if (resCajaSucursal.rows.length !== 1) {
-                throw new Error('Error con la sucursal asociada al préstamo');
-            }
-
-            const cajaSucursalId = resCajaSucursal.rows[0]?.caja_sucursal_id;
-
-
 
     for (const cobro of cobrosAProcesar) {
         if (cobro.estado === 'confirmado') {
@@ -261,9 +244,6 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
                  WHERE prestamo_id = $2`,
                 [cobro.monto_cobrado, cobro.prestamo_id]
             );
-              totalIngreso += cobro.monto_cobrado;
-
-            
 
             resultados.procesados.push(cobro.cobro_id);
             await client.query(`RELEASE SAVEPOINT sp_${cobro.cobro_id}`);
@@ -273,36 +253,6 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
             resultados.errores.push({ id: cobro.cobro_id, motivo: err.message });
         }
     }
-
-    //sumar registrar el movimiento en caja sucursal y actualizar el saldo de la caja sucursal
-            // Obtener caja_sucursal_id asociada al usuario que hizo el cobro
-          
-            // Registrar el movimiento en caja_sucursal_movimientos
-            await client.query(
-                `INSERT INTO caja_sucursal_movimientos (
-                caja_sucursal_id, 
-                tipo_movimiento, 
-                monto, 
-                fecha_movimiento, 
-                descripcion, 
-                usuario_id)
-                 VALUES (
-                 $1, 
-                 'ingreso', 
-                 $2, 
-                 NOW(), 
-                 'Cobro de préstamos el dia'+ new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
-                 $3)`,
-                [cajaSucursalId, totalIngreso, cobrador_id]
-            );
-
-            // Actualizar el saldo de la caja sucursal
-            await client.query(
-                `UPDATE caja_sucursales 
-                SET saldo_actual = saldo_actual + $1 
-                WHERE caja_sucursal_id = $2`,
-                [totalIngreso, cajaSucursalId]
-            );
 
     // Identificar cobros que no se encontraron en la BD
     const encontradosIds = cobrosAProcesar.map(c => c.cobro_id);
