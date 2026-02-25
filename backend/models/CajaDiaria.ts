@@ -83,7 +83,7 @@ export const abrirCajaDiaria = async (caja: CajaDiaria, sucursal_id: number): Pr
         caja.ruta_id,
         caja.fecha_apertura || new Date().toISOString(),
         caja.monto_base_inicial,
-         caja.monto_base_inicial,
+         caja.monto_base_inicial || 0, // El monto_final_esperado inicia igual al monto_base_inicial
         'abierta'
       ]
     );

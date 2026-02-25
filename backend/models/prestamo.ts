@@ -120,6 +120,17 @@ export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo | nul
   }
 };
 
+//confirmar prestamo
+export const confirmarPrestamo = async (prestamo_id: number): Promise<Prestamo | null> => {
+  const result = await db.query(
+    `UPDATE prestamos
+     SET estado_prestamo = 'en curso'
+     WHERE prestamo_id = $1 RETURNING *`,
+    [prestamo_id]
+  );
+  return result.rows[0] || null;
+};
+
 // Obtener todos los préstamos
 export const getAllPrestamos = async (): Promise<Prestamo[]> => {
   const result = await db.query(`SELECT * FROM prestamos order by prestamo_id asc`);
@@ -239,6 +250,7 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   getPrestamosInfo,
   getPrestamoInfoById,
   updatePrestamo,
+  confirmarPrestamo,
   deletePrestamo
 };
 

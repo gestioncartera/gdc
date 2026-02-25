@@ -2,6 +2,7 @@ import prestamo from "../models/prestamo";
 import cliente from "../models/cliente";
 import cobro from "../models/cobro";
 import Tipoprestamo from "../models/TipoPrestamo";
+import usuario from "../models/usuario";
 import { Request, Response } from "express";
 
 // Crear un nuevo préstamo
@@ -16,6 +17,12 @@ export const createPrestamo = async (req: Request, res: Response): Promise<Respo
     const existeCliente = await cliente.getClienteById(req.body.cliente_id);
     if (!existeCliente) {
       return res.status(404).json({ error: 'El cliente especificado no existe' });
+    }
+
+    //validar si el usuario creador es admin o cobrador
+    const admin = await usuario.esAdmin(req.body.id_usuario_creacion);
+    if(admin === true){
+        req.body.estado_prestamo = 'en curso';
     }
 
     // 3. Validar tipo de préstamo
@@ -186,6 +193,26 @@ export const updatePrestamo = async (req: Request, res: Response): Promise<Respo
     }
 };
 
+// Confirmar un préstamo 
+export const confirmarPrestamo = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const idPrestamo = parseInt(req.params.id);
+    const prestamoById = await prestamo.getPrestamoById(idPrestamo);
+    if (!prestamoById) {
+      return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+
+    const updatedPrestamo = await prestamo.confirmarPrestamo(idPrestamo);
+    if (!updatedPrestamo) {
+      return res.status(404).json({ error: 'Préstamo no Actualizado' });
+    }
+    return res.status(200).json(updatedPrestamo);
+    } catch (error) {
+     // console.error(error);
+    return res.status(500).json({ error: 'Error al actualizar el préstamo' });
+    }
+};
+
 // Eliminar un préstamo
 export const deletePrestamo = async (req: Request, res: Response): Promise<Response> => {
     try {   
@@ -255,4 +282,5 @@ export default {
   updatePrestamo,
   deletePrestamo,
   getPrestamoAndCobrosInfo,
+  confirmarPrestamo
 };

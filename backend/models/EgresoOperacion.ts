@@ -87,6 +87,16 @@ export const getAllEgresosOperacionPendientes = async (usuario_id: number,ruta_i
   return result.rows;
 };  
 
+//obtener sumatoria de egresos pendientes
+export const getSumEgresosOperacionPendientes = async (usuario_id: number,ruta_id: number): Promise<number> => {
+  const result = await db.query(`SELECT SUM(monto) as total
+    FROM egresos_operacion
+    WHERE estado_egreso = 'pendiente' AND usuario_id = $1 AND ruta_id = $2`,
+    [usuario_id,
+    ruta_id]);
+  return Number(result.rows[0].total )|| 0;
+};
+
 // Eliminar egreso de operación
 export const deleteEgresoOperacion = async (egreso_id: number): Promise<EgresoOperacion | null> => {
   const result = await db.query(
@@ -117,6 +127,7 @@ export const updateEgresoOperacion = async (egreso_id: number, egreso: EgresoOpe
 export default {
   createEgresoOperacion,
   getAllEgresosOperacionPendientes,
+  getSumEgresosOperacionPendientes,
   deleteEgresoOperacion,
   updateEgresoOperacion,
 };

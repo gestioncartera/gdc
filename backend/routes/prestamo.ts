@@ -13,4 +13,5 @@ router.get("/getPrestamoInfoById/:prestamo_id", auth, prestamo.getPrestamoInfoBy
 router.get("/prestamoCobros/:prestamo_id", auth, prestamo.getPrestamoAndCobrosInfo);
 router.patch("/updatePrestamo/:id", auth, prestamo.updatePrestamo);
 router.delete("/deletePrestamo/:id", auth, prestamo.deletePrestamo);
+router.patch("/confirmarPrestamo/:id", auth, prestamo.confirmarPrestamo);
 export default router;

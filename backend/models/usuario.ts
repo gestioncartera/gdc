@@ -120,6 +120,14 @@ export const getCobradoresActivos = async (idSucursal: number): Promise<Usuario[
   return result.rows;
 }
 
+export const esAdmin = async (id: number): Promise<boolean> => {
+  const result = await db.query(
+    'SELECT * FROM usuarios WHERE usuario_id = $1 AND tipo_usuario = 1',
+    [id]
+  );
+  return result.rows[0] ? true : false;
+}
+
 
 
 export default {
@@ -131,5 +139,6 @@ export default {
   updateUsuario,
   updatePassword,
   deleteUsuario,
-  getCobradoresActivos
+  getCobradoresActivos,
+  esAdmin
 };

@@ -176,10 +176,64 @@ export const updateCobro = async (cobro_id: number, cobro: Cobro): Promise<Cobro
   return result.rows[0] || null;
 };
 
+// Actualizar monto de cobro y sincronizar caja diaria (Transacción)
+export const updateMontoCobroConCaja = async (
+  cobro_id: number, 
+  nuevo_monto: number
+): Promise<Cobro | null> => {
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. Obtener el cobro actual para saber el monto anterior
+    const resCobroActual = await client.query(
+      `SELECT c.*, cd.caja_diaria_id, cd.monto_final_esperado
+       FROM cobros c
+       INNER JOIN cajas_diarias cd ON c.usuario_id = cd.usuario_id AND cd.estado = 'abierta'
+       WHERE c.cobro_id = $1
+       FOR UPDATE OF cd`,
+      [cobro_id]
+    );
+
+    if (resCobroActual.rowCount === 0) {
+      throw new Error('Cobro no encontrado o no tiene caja diaria abierta.');
+    }
+
+    const cobroActual = resCobroActual.rows[0];
+    const montoAnterior = parseFloat(cobroActual.monto_cobrado);
+    const cajaId = cobroActual.caja_diaria_id;
+    const diferencia = nuevo_monto - montoAnterior;
+
+    // 2. Actualizar el cobro con el nuevo monto
+    const resUpdateCobro = await client.query(
+      `UPDATE cobros SET monto_cobrado = $1 WHERE cobro_id = $2 RETURNING *`,
+      [nuevo_monto, cobro_id]
+    );
+
+    // 3. Actualizar la caja diaria (sumar la diferencia)
+    await client.query(
+      `UPDATE cajas_diarias 
+       SET monto_final_esperado = COALESCE(monto_final_esperado, 0) + $1
+       WHERE caja_diaria_id = $2`,
+      [diferencia, cajaId]
+    );
+
+    await client.query('COMMIT');
+    return resUpdateCobro.rows[0];
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 //cambiar estado de un cobro a pagado
 export const validarCobro = async(cobro_id:number):Promise<Cobro|null>=>{
   const result = await db.query(
-    `UPDATE cobros SET estado = $1 WHERE cobro_id = $1 RETURNING *`,
+    `UPDATE cobros SET estado = $1 WHERE cobro_id = $2 RETURNING *`,
     [
       'confirmado',
       cobro_id
@@ -279,6 +333,7 @@ export default {
   getCobrosByRutaId,
   getCobroInfoById,
   getCobrosPendientesByPrestamoId,
+  updateMontoCobroConCaja,
   updateCobro,
   deleteCobro,
   validarCobro,

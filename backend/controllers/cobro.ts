@@ -2,28 +2,32 @@ import cobro from "../models/cobro";
 import prestamo from "../models/prestamo";
 import usuario from "../models/usuario";
 import ruta from "../models/ruta";
+import EgresoOperacion from "../models/EgresoOperacion";
 import { Request, Response } from "express";
+import CajaDiaria from "../models/CajaDiaria";
 
 
 // Crear un nuevo cobro
 export const createCobro = async (req: Request, res: Response): Promise<Response> => {
   try {
-    //validar que  el prestamo no tenga cobros pendientes anteriores
-    const cobrosPendientes = await cobro.getCobrosPendientesByPrestamoId(req.body.prestamo_id);
-    if (cobrosPendientes && cobrosPendientes.length > 0) {
-      return res.status(400).json({ error: 'El préstamo tiene cobros pendientes anteriores' });
-    }
+    
 
     //validar si el prestamo existe
     const prestamoExistente = await prestamo.getPrestamoById(req.body.prestamo_id);
     if (!prestamoExistente) {
-      return res.status(404).json({ error: 'Préstamo no encontrado' });
+      return res.status(404).send({ error: 'Préstamo no encontrado' });
     }
 
     //validar que el cobrador exista
     const cobradorExistente = await usuario.getUsuarioById(req.body.usuario_id);
     if (!cobradorExistente) {
-      return res.status(404).json({ error: 'Cobrador no encontrado' });
+      return res.status(404).send({ error: 'Cobrador no encontrado' });
+    }
+
+    //validar que  el prestamo no tenga cobros pendientes anteriores
+    const cobrosPendientes = await cobro.getCobrosPendientesByPrestamoId(req.body.prestamo_id);
+    if (cobrosPendientes && cobrosPendientes.length > 0) {
+      return res.status(400).send({ error: 'El préstamo tiene cobros pendientes anteriores' });
     }
 
     //Validar que el cobrador sea el asignado a la ruta del cliente del prestamo
@@ -106,7 +110,7 @@ export const getCobroById = async (req: Request, res: Response): Promise<Respons
     }
     return res.status(200).json(cobroById);
   } catch (error) {
-    return res.status(500).json({ error: 'Error al obtener el cobro' });
+    return res.status(500).send({ error: 'Error al obtener el cobro' });
   } 
 };
 
@@ -117,17 +121,33 @@ export const getCobrosByRutaId = async (req: Request, res: Response): Promise<Re
     //validar si existe la ruta
     const existeRuta = await ruta.getRutaById(ruta_id);
     if (!existeRuta) {
-      return res.status(404).json({ error: 'Ruta no encontrada' });
+      return res.status(404).send({ error: 'Ruta no encontrada' });
     }
 
     
     const cobrosByRutaId = await cobro.getCobrosByRutaId(ruta_id);
     if (!cobrosByRutaId) {
-      return res.status(404).json({ error: 'No se encontraron cobros para la ruta especificada' });
+      return res.status(404).send({ error: 'No se encontraron cobros para la ruta especificada' });
     }
-    return res.status(200).json(cobrosByRutaId);
+
+    const cajaDiaria = await CajaDiaria.getCajasDiariasByRuta(ruta_id);
+    if (!cajaDiaria) {
+      return res.status(404).send({ error: 'No se encontraron cajas diarias para la ruta especificada' });
+    }
+
+    const usuario_id = cajaDiaria[0].usuario_id;
+
+    const egresos = await EgresoOperacion.getSumEgresosOperacionPendientes(usuario_id,ruta_id);
+
+    return res.status(200).json({"cobros":cobrosByRutaId,
+      "Base Inicial":cajaDiaria[0].monto_base_inicial,
+      "recaudado":Number(cajaDiaria[0]?.monto_final_esperado ?? 0) + Number(egresos)-Number(cajaDiaria[0]?.monto_base_inicial ?? 0),
+      "egresos":egresos,
+      "total":cajaDiaria[0].monto_final_esperado
+    }    
+    );
   } catch (error) {
-    return res.status(500).json({ error: 'Error al obtener los cobros por ruta' });
+    return res.status(500).send({ error: 'Error al obtener los cobros por ruta' });
   }
 };
 
@@ -166,6 +186,29 @@ export const updateCobro = async (req: Request, res: Response): Promise<Response
     return res.status(500).json({ error: 'Error al actualizar el cobro' });
     }   
 };
+
+//actualizar el monto de un cobro
+export const updateMontoCobroConCaja = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const id = parseInt(req.params.cobro_id);
+    const  monto_cobrado  = req.body.monto_cobrado;
+
+    if (!monto_cobrado) {
+      return res.status(400).send({ error: 'El monto cobrado es requerido' });
+    }
+
+    const updatedCobro = await cobro.updateMontoCobroConCaja(id, monto_cobrado);
+
+    if (!updatedCobro) {
+      return res.status(404).send({ error: 'Cobro no encontrado' });
+    }
+
+    return res.status(200).json(updatedCobro);
+  } catch (error) {
+    return res.status(500).send({ error: 'Error al actualizar el monto del cobro' });
+  }
+};
+
 
 // Eliminar un cobro
 export const deleteCobro = async (req: Request, res: Response): Promise<Response> => {
@@ -256,6 +299,7 @@ export default {
   getCobrosByRutaId,
   getCobroInfoById,
   updateCobro,
+  updateMontoCobroConCaja,
   deleteCobro,
   validarMultiplesCobros,
   getPrestamoCobrosHistory

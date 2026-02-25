@@ -10,6 +10,7 @@ router.get('/getCobroById/:cobro_id', auth, cobro.getCobroById);
 router.get('/getCobrosByRutaId/:ruta_id', auth, cobro.getCobrosByRutaId);
 router.get('/getCobroInfoById/:cobro_id', auth, cobro.getCobroInfoById);
 router.get('/getCobrosByPrestamoId/:prestamo_id', auth, cobro.getPrestamoCobrosHistory);
+router.get('/updateMontoCobroConCaja/:cobro_id', auth, cobro.updateMontoCobroConCaja);
 //router.put('/updateCobro/:cobro_id', auth, cobro.updateCobro);
 router.delete('/deleteCobro/:cobro_id', auth, cobro.deleteCobro);
 router.patch('/validarMultiplesCobros', auth, cobro.validarMultiplesCobros);

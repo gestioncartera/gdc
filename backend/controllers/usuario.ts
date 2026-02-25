@@ -148,6 +148,8 @@ export const getCobradoresActivos = async (req: Request, res: Response) => {
   }
 }
 
+
+
 //Login usuario
 export const login = async (req: Request, res: Response) => {
   try {
