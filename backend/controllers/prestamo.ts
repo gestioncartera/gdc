@@ -45,9 +45,24 @@ export const createPrestamo = async (req: Request, res: Response): Promise<Respo
     ? res.status(400).send({ error: 'No se pudo crear el préstamo' }) 
     : res.status(201).send({message:"Préstamo creado exitosamente"});
 
-  } catch (error) {
-    console.error( error);
-    return res.status(500).send({ error: 'Error al crear el préstamo' });
+  } catch (error: any) {
+    //console.error(error);
+    
+    // Errores de negocio/validación del modelo (caja diaria cerrada, saldo insuficiente, etc.)
+    const erroresNegocio = [
+      'caja diaria abierta',
+      'Saldo insuficiente',
+      'No se pudo crear'
+    ];
+    
+    const esErrorNegocio = erroresNegocio.some(msg => error.message?.includes(msg));
+    
+    if (esErrorNegocio) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    // Errores inesperados del servidor
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -129,6 +144,7 @@ export const getPrestamoAndCobrosInfo = async (req: Request, res: Response): Pro
       saldo_pendiente:prestamoInfo.saldo_pendiente,
       valor_cuota:prestamoInfo.valor_cuota,
       fecha_fin_prestamo:prestamoInfo.fecha_fin_prestamo,
+      nombre_ruta:prestamoInfo.nombre_ruta,
       data:[]
     };
 

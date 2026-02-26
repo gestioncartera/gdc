@@ -40,7 +40,7 @@ export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo | nul
     const cajaDiaria = resCaja.rows[0];
     
     // *OPCIONAL*: Validar saldo suficiente en caja diaria (si manejas saldo en tiempo real)
-    if (cajaDiaria.saldo_final_esperado < prestamo.monto_prestamo) {
+    if (cajaDiaria.monto_final_esperado < prestamo.monto_prestamo) {
        throw new Error('Saldo insuficiente en caja diaria para desembolsar este préstamo.');
      }
 
@@ -144,9 +144,11 @@ export const getPrestamoById = async (prestamo_id: number): Promise<Prestamo | a
     clientes.nombres||' '||clientes.apellidos AS cliente ,
     prestamos.saldo_pendiente,
     prestamos.valor_cuota,
-    prestamos.fecha_fin_prestamo
+    prestamos.fecha_fin_prestamo,
+      rutas.nombre_ruta
     FROM  clientes
     inner join prestamos on clientes.cliente_id=prestamos.cliente_id
+    inner join rutas on clientes.id_ruta=rutas.ruta_id
     WHERE prestamo_id = $1`, 
   [prestamo_id]);
   return result.rows[0] || null;
@@ -235,8 +237,41 @@ export const updatePrestamo = async (prestamo_id: number,prestamo:Prestamo): Pro
 
 // Eliminar un préstamo
 export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | null> => {
-  const result = await db.query(`DELETE FROM prestamos WHERE prestamo_id = $1 RETURNING *`, [prestamo_id]);
-  return result.rows[0] || null;
+  const client = await db.connect();
+
+  try {
+    await client.query('BEGIN');
+
+  const result = await db.query(`DELETE FROM prestamos 
+    WHERE prestamo_id = $1  and estado_prestamo = 'pendiente' RETURNING *`, 
+    [prestamo_id]);
+
+    const updateCaja = await client.query(
+      `UPDATE cajas_diarias
+       SET monto_final_esperado = monto_final_esperado + $1
+        WHERE  usuario_id = $2
+           AND estado = 'abierta'`, 
+           [result.rows[0].monto_prestamo,
+            result.rows[0].id_usuario_creacion
+      ]
+    );
+
+    const deleteEgreso = await client.query(
+      `DELETE FROM egresos_operacion 
+       WHERE concepto = $1 AND usuario_id = $2 and estado_egreso = 'pendiente'`,
+       ['Desembolso Préstamo #' + prestamo_id, result.rows[0].id_usuario_creacion]
+    );
+
+
+   await client.query('COMMIT');
+      return result.rows[0] || null;
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };  
 
 
