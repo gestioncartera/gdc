@@ -131,11 +131,81 @@ export const confirmarPrestamo = async (prestamo_id: number): Promise<Prestamo |
   return result.rows[0] || null;
 };
 
+//rechazar prestamo
+export const rechazarPrestamo = async (prestamo_id: number): Promise<Prestamo | null> => {
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    // 1. Actualizar el estado del préstamo a 'rechazado'
+    const resPrestamo = await client.query(
+      `UPDATE prestamos
+        SET estado_prestamo = 'rechazado'
+        WHERE prestamo_id = $1 RETURNING *`,
+      [prestamo_id]
+    );
+    if (resPrestamo.rows.length === 0) {
+      throw new Error('Préstamo no encontrado');
+    }
+
+    const prestamo = resPrestamo.rows[0];
+
+    // 2. Obtener la caja diaria abierta del usuario
+    const resCaja = await client.query(
+      `SELECT * FROM cajas_diarias
+       WHERE usuario_id = $1 AND estado = 'abierta'`,
+      [prestamo.id_usuario_creacion]
+    );
+
+    if (resCaja.rows.length === 0) {
+      throw new Error('No hay caja diaria abierta para este usuario');
+    }
+
+    const cajaDiaria = resCaja.rows[0];
+
+    // 3. cambiar estado  del egreso 
+    await client.query(
+      `UPDATE egresos_operacion
+       SET estado_egreso = 'rechazado'
+       WHERE usuario_id = $1 AND concepto = 'Desembolso Préstamo #' || $2`,
+      [prestamo.id_usuario_creacion, prestamo_id]
+    );
+        
+    // 4. Actualizar el saldo de la caja diaria
+    await client.query(
+      `UPDATE cajas_diarias
+       SET monto_final_esperado = monto_final_esperado + $1
+       WHERE caja_diaria_id = $2`,
+      [prestamo.monto_prestamo, cajaDiaria.caja_id]
+    );
+
+    await client.query('COMMIT');
+    return prestamo;
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 // Obtener todos los préstamos
 export const getAllPrestamos = async (): Promise<Prestamo[]> => {
   const result = await db.query(`SELECT * FROM prestamos order by prestamo_id asc`);
   return result.rows;
 };
+
+//obtener prestamos pendientes de una sucursal
+export const PrestamosPendientes = async (sucursal_id: number): Promise<Prestamo[]> => {
+  const result = await db.query(
+    `SELECT * FROM prestamos 
+     WHERE sucursal_id = $1 AND estado_prestamo = 'pendiente' 
+     ORDER BY prestamo_id ASC`,
+    [sucursal_id]
+  );
+  return result.rows;
+}
+
 
 // Obtener un préstamo por ID
 export const getPrestamoById = async (prestamo_id: number): Promise<Prestamo | any> => {
@@ -286,7 +356,9 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   getPrestamoInfoById,
   updatePrestamo,
   confirmarPrestamo,
-  deletePrestamo
+  deletePrestamo,
+  rechazarPrestamo,
+  PrestamosPendientes
 };
 
 

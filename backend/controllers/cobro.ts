@@ -140,7 +140,7 @@ export const getCobrosByRutaId = async (req: Request, res: Response): Promise<Re
     const egresos = await EgresoOperacion.getSumEgresosOperacionPendientes(usuario_id,ruta_id);
 
     return res.status(200).json({"cobros":cobrosByRutaId,
-      "Base Inicial":cajaDiaria[0].monto_base_inicial,
+      "Base_Inicial":cajaDiaria[0].monto_base_inicial,
       "recaudado":Number(cajaDiaria[0]?.monto_final_esperado ?? 0) + Number(egresos)-Number(cajaDiaria[0]?.monto_base_inicial ?? 0),
       "egresos":egresos,
       "total":cajaDiaria[0].monto_final_esperado

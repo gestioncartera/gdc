@@ -32,7 +32,7 @@ const anularMovimientoCajaSucursal = async (req: Request, res: Response) => {
         const movimientoAnulado = await movtoCajaSucursal.anularMovimientoCajaSucursal(movimiento_id);
 
         if (!movimientoAnulado) {
-            return res.status(404).send({ error: 'Movimiento no encontrado' });
+            return res.status(404).send({ error: 'Movimiento no encontrado o es una apertura de caja' });
         }
 
         return res.status(200).json(movimientoAnulado);

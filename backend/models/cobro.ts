@@ -267,8 +267,9 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
     // 1. Obtener todos los datos necesarios en UNA sola consulta
     // Esto reduce drásticamente el tiempo
     const cobrosQuery = await client.query(
-      `SELECT c.cobro_id, c.monto_cobrado, c.prestamo_id, c.estado 
+      `SELECT c.cobro_id, c.monto_cobrado, c.prestamo_id, c.estado ,p.estado_prestamo
        FROM cobros c 
+       inner join prestamos p on c.prestamo_id = p.prestamo_id
        WHERE c.cobro_id = ANY($1) FOR UPDATE`,
       [cobroIds]
     );
@@ -281,6 +282,7 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
              continue;
         }
 
+        
         try {
             await client.query(`SAVEPOINT sp_${cobro.cobro_id}`);
 

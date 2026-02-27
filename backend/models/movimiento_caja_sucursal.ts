@@ -77,13 +77,37 @@ export const getMovimientosByCajaSucursalId = async (caja_sucursal_id: number): 
 
 //anular movimiento
 export const anularMovimientoCajaSucursal = async (movimiento_id: number): Promise<MovimientoCajaSucursal | null> => {
+   const client = await db.connect();
+    
+    try {
+        await client.query('BEGIN');
+   
     const result = await db.query(
         `UPDATE movimientos_caja_sucursal 
         SET estado_movto = 'anulado'
-        WHERE movimiento_id = $1 RETURNING *`,
+        WHERE movimiento_id = $1 and descripcion='Apertura de caja diaria' RETURNING *`,
         [movimiento_id]
     );
-    return result.rows[0] || null;
+
+    // 2. Actualizar Saldo Caja
+        const updatecaja = await client.query(`UPDATE cajas_sucursales 
+            SET saldo_actual = saldo_actual - $2, 
+            fecha_ultima_actualizacion = NOW() 
+            WHERE caja_sucursal_id = $1 RETURNING *`,
+        [result.rows[0].caja_sucursal_id,
+            result.rows[0].monto,
+        ]);
+   
+   await client.query('COMMIT');
+         return result.rows[0] || null;
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+
 };
 
 export default {

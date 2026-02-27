@@ -212,7 +212,7 @@ export const updatePrestamo = async (req: Request, res: Response): Promise<Respo
 // Confirmar un préstamo 
 export const confirmarPrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const idPrestamo = parseInt(req.params.id);
+    const idPrestamo = parseInt(req.params.prestamo_id);
     const prestamoById = await prestamo.getPrestamoById(idPrestamo);
     if (!prestamoById) {
       return res.status(404).json({ error: 'Préstamo no encontrado' });
@@ -229,17 +229,54 @@ export const confirmarPrestamo = async (req: Request, res: Response): Promise<Re
     }
 };
 
+// Rechazar un préstamo
+export const rechazarPrestamo = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const idPrestamo = parseInt(req.params.prestamo_id);
+    const prestamoById = await prestamo.getPrestamoById(idPrestamo);
+    if (!prestamoById) {
+      return res.status(404).send({ error: 'Préstamo no encontrado' });
+    }
+
+    const updatedPrestamo = await prestamo.rechazarPrestamo(idPrestamo);
+    if (!updatedPrestamo) {
+      return res.status(404).send({ error: 'Préstamo no Actualizado' });
+    }
+    return res.status(200).json(updatedPrestamo);
+    } catch (error) {
+     // console.error(error);
+    return res.status(500).send({ error: 'Error al actualizar el préstamo' });
+    }
+};
+
+// Obtener préstamos pendientes
+export const PrestamosPendientes = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    if (!sucursal_id) {
+      return res.status(400).send({ error: 'Faltan parámetros requeridos' });
+    }
+    const prestamosPendientes = await prestamo.PrestamosPendientes(sucursal_id);
+    if (!prestamosPendientes || prestamosPendientes.length === 0) {
+      return res.status(404).send({ error: 'No hay préstamos pendientes para esta sucursal' });
+    }
+    return res.status(200).json(prestamosPendientes);
+  } catch (error) {
+    return res.status(500).send({ error: 'Error al obtener los préstamos pendientes' });
+  }
+}
+
 // Eliminar un préstamo
 export const deletePrestamo = async (req: Request, res: Response): Promise<Response> => {
     try {   
         const id = parseInt(req.params.id);
         const deletedPrestamo = await prestamo.deletePrestamo(id);
         if (!deletedPrestamo) {
-            return res.status(404).json({ error: 'Préstamo no encontrado' });
+            return res.status(404).send({ error: 'Préstamo no encontrado' });
         }
         return res.status(200).json(deletedPrestamo);
     } catch (error) {       
-        return res.status(500).json({ error: 'Error al eliminar el préstamo' });
+        return res.status(500).send({ error: 'Error al eliminar el préstamo' });
     }
 };
 
@@ -298,5 +335,7 @@ export default {
   updatePrestamo,
   deletePrestamo,
   getPrestamoAndCobrosInfo,
-  confirmarPrestamo
+  confirmarPrestamo,
+  rechazarPrestamo,
+  PrestamosPendientes
 };
