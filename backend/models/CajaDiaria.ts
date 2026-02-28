@@ -185,6 +185,91 @@ export const updateBase = async (caja_diaria_id: number, nuevoMontoBase: number)
   return result.rows[0] || null;
 }
 
+//cerrar caja diaria y actualizar el monto final real, diferencia y estado
+/* export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real: number): Promise<CajaDiaria | null> => {
+  const client = await db.connect();
+  try {    await client.query('BEGIN');
+
+    // Obtener la caja diaria para calcular la diferencia 
+    const resCaja = await client.query(
+      `SELECT monto_final_esperado 
+      FROM cajas_diarias 
+      WHERE caja_diaria_id = $1 FOR UPDATE`,
+      [caja_diaria_id]
+    );
+    if (resCaja.rowCount === 0) {
+      throw new Error('Caja diaria no encontrada');
+    }
+    const monto_final_esperado = resCaja.rows[0].monto_final_esperado || 0;
+    const diferencia = monto_final_real - monto_final_esperado;
+    
+    // Actualizar la caja diaria
+    const result = await client.query(
+      `UPDATE cajas_diarias
+      SET fecha_cierre = NOW(), 
+      monto_final_real = $1, 
+      diferencia = $2,
+       estado = 'cerrada'
+      WHERE caja_diaria_id = $3 RETURNING *`,
+      [monto_final_real, diferencia, caja_diaria_id]
+    );
+
+    // Actualizar el saldo de la caja sucursal
+    const resSucursal = await client.query(
+      `SELECT sucursal_id FROM cajas_diarias WHERE caja_diaria_id = $1`,
+      [caja_diaria_id]
+    );
+    const sucursal_id = resSucursal.rows[0].sucursal_id;
+
+      const cajaSucursal=await client.query(
+      `UPDATE cajas_sucursales
+      SET saldo_actual = saldo_actual + $1
+      WHERE sucursal_id = $2`,
+      [diferencia, sucursal_id]
+    );
+
+  const movtoCajaSucursal = await client.query(
+      `INSERT INTO movimientos_caja_sucursal (
+        caja_sucursal_id,
+        usuario_responsable_id,
+        tipo_movimiento,
+        monto,          
+        descripcion,
+        fecha_movimiento
+      ) VALUES (
+        $1,
+        (SELECT usuario_id FROM cajas_diarias WHERE caja_diaria_id = $2),
+        'ingreso',
+        $3,
+        'Cierre de caja diaria',
+        NOW()
+      ) RETURNING *`,
+      [cajaSucursal.rows[0].caja_sucursal_id,
+      result.rows[0].usuario_id, 
+      caja_diaria_id, 
+      Number(cajaDiaria[0]?.monto_final_esperado ?? 0) + Number(egresos)-Number(cajaDiaria[0]?.monto_base_inicial ?? 0),]
+    );
+
+
+{"cobros":cobrosByRutaId,
+      "Base_Inicial":cajaDiaria[0].monto_base_inicial,
+      "recaudado":Number(cajaDiaria[0]?.monto_final_esperado ?? 0) + Number(egresos)-Number(cajaDiaria[0]?.monto_base_inicial ?? 0),
+      "egresos":egresos,
+      "total":cajaDiaria[0].monto_final_esperado
+    }    
+
+
+  
+    await client.query('COMMIT');
+    return result.rows[0] || null;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+} */
+
 // Eliminar una caja diaria
 export const deleteCajaDiaria = async (id: number): Promise<void> => {
   await db.query(`DELETE FROM cajas_diarias WHERE caja_diaria_id = $1`, [id]);

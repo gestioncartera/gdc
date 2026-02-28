@@ -55,11 +55,33 @@ export const updateEgresoOperacion = async (req: Request, res: Response): Promis
     const egresoOperacion = req.body;
     const updatedEgresoOperacion = await EgresoOperacion.updateEgresoOperacion(id, egresoOperacion);
     if (!updatedEgresoOperacion) {
-        return res.status(404).json({ error: 'Egreso de operación no encontrado' });
+        return res.status(404).send({ error: 'Egreso de operación no encontrado' });
     }
     return res.status(200).json(updatedEgresoOperacion);
   } catch (error) {
-    return res.status(500).json({ error: 'Error al actualizar el egreso de operación' });
+    return res.status(500).send({ error: 'Error al actualizar el egreso de operación' });
+  }
+};
+
+export const confirmarEgresosOperacion = async (req: Request, res: Response): Promise<Response> => {
+  try {
+
+    const { usuario_id, ruta_id } = req.body;
+    if (!usuario_id || !ruta_id) {
+      return res.status(400).send({ error: 'Faltan parámetros requeridos' });
+    }
+
+    const asignacion = await AsignacionRuta.isRutaAsignada(ruta_id,usuario_id);
+    if (!asignacion) {
+      return res.status(404).send({ error: 'No se encontró la ruta asignada al usuario' });
+    }
+    const egresosOperacion = await EgresoOperacion.confirmarEgresosOperacion(usuario_id, ruta_id);
+    if (!egresosOperacion) {
+      return res.status(404).send({ error: 'No se encontraron egresos de operación pendientes' });
+    }
+    return res.status(200).json(egresosOperacion);
+  } catch (error) {
+    return res.status(500).send({ error: 'Error al confirmar los egresos de operación' });
   }
 };
 
@@ -67,5 +89,6 @@ export default {
   createEgresoOperacion,
   getAllEgresosOperacionPendientes,
   deleteEgresoOperacion,
-  updateEgresoOperacion
+  updateEgresoOperacion,
+  confirmarEgresosOperacion
 };

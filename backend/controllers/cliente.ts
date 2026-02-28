@@ -90,6 +90,27 @@ const getClientesByRuta = async (req: Request, res: Response) => {
     }
 };
 
+//listar clientes por ruta con prestamo activos
+const getClientesByRutaPrestamo = async (req: Request, res: Response) => {
+    try { 
+
+
+        const existeRuta = await ruta.getRutaById(parseInt(req.params.id_ruta));
+        if (!existeRuta) {
+            return res.status(400).send({ error: 'La ruta especificada no existe' });
+        }
+
+        const id_ruta = parseInt(req.params.id_ruta);
+        const clientesEncontrado = await cliente.getClientesByRutaPrestamo(id_ruta);
+          return clientesEncontrado.length===0
+          ? res.status(404).send({ message: 'Cliente no encontrado para la ruta' }) 
+          : res.status(200).json(clientesEncontrado);
+    }
+        catch (error) {
+        return res.status(500).send({ error: 'Error al obtener el cliente' });
+    }
+};
+
 //listar clientes por ruta con idUsuario desde params
 const getClientesByUser = async (req: Request, res: Response) => {
     try { 
@@ -184,6 +205,7 @@ export default{
     getClienteById,
     getClientesBySucursal,
     getClientesByRuta,
+    getClientesByRutaPrestamo,
     getClientesByUser,
     getClientesConPrestamosActivos,
     updateCliente,
