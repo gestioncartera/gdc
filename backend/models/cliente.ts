@@ -87,10 +87,10 @@ export async function getClientesByRuta(id_ruta: number): Promise<Cliente[]> {
 }
 
 export async function getClientesByRutaPrestamo(id_ruta: number): Promise<Cliente[]> {
-  const result = await db.query(`SELECT * 
-    FROM clientes 
-    inner join prestamos on clientes.cliente_id = prestamos.cliente_id and prestamos.estado_prestamo='en curso'
-    WHERE id_ruta = $1 order by orden_ruta asc`,
+  const result = await db.query(`SELECT c.* 
+    FROM clientes c
+    inner join prestamos on c.cliente_id = prestamos.cliente_id and prestamos.estado_prestamo='en curso'
+    WHERE c.id_ruta = $1 order by c.orden_ruta asc`,
     [id_ruta]);
   return result.rows;
 }

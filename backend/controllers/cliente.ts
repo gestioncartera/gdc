@@ -107,6 +107,7 @@ const getClientesByRutaPrestamo = async (req: Request, res: Response) => {
           : res.status(200).json(clientesEncontrado);
     }
         catch (error) {
+           // console.log(error)
         return res.status(500).send({ error: 'Error al obtener el cliente' });
     }
 };

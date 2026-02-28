@@ -198,9 +198,13 @@ export const getAllPrestamos = async (): Promise<Prestamo[]> => {
 //obtener prestamos pendientes de una sucursal
 export const PrestamosPendientes = async (sucursal_id: number): Promise<Prestamo[]> => {
   const result = await db.query(
-    `SELECT p.*, clientes.nombres||' '||clientes.apellidos AS cliente 
+    `SELECT p.*, clientes.nombres||' '||clientes.apellidos AS cliente ,
+    tipo_prestamo.porcentaje as tasa_interes,
+    usuarios.nombres||' '||usuarios.apellidos AS nombre_cobrador
     FROM prestamos p 
     inner join clientes on p.cliente_id=clientes.cliente_id
+    inner join tipo_prestamo on p.tipo_prestamo_id=tipo_prestamo.id_tipo_prestamo
+    inner join usuarios on p.id_usuario_creacion=usuarios.usuario_id
      WHERE p.sucursal_id = $1 AND p.estado_prestamo = 'pendiente' 
      ORDER BY prestamo_id ASC`,
     [sucursal_id]
