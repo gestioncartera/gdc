@@ -1,3 +1,4 @@
+import e from "express";
 import  db   from "../db/db";
 
 export interface EgresoOperacion {
@@ -124,10 +125,75 @@ export const updateEgresoOperacion = async (egreso_id: number, egreso: EgresoOpe
   return result.rows[0] || null;
 };
 
+//confirmar egresos de la operación, recibiendo usuario_id y ruta_id. (cambia estado a confirmado y no impacta caja sucursal creando el movimiento)
+const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): Promise<any[] | null> => {
+  const client = await db.connect();
+  
+  try {
+    await client.query('BEGIN');
+
+    
+    const updateResult = await client.query(
+      `WITH updated_egresos AS (
+        UPDATE egresos_operacion eo
+        SET estado_egreso = 'confirmado'
+        WHERE eo.usuario_id = $1 
+          AND eo.ruta_id = $2 
+          AND eo.estado_egreso = 'pendiente'
+        RETURNING 
+          eo.monto, 
+          eo.descripcion,
+          (SELECT sucursal_id FROM usuarios WHERE usuario_id = $1) as sucursal_id
+      ),
+      total_egresos AS (
+        SELECT 
+          SUM(monto) as total,
+          sucursal_id
+        FROM updated_egresos
+        GROUP BY sucursal_id
+      ),
+      insert_movimientos AS (
+        INSERT INTO movimientos_caja_sucursal (
+          usuario_responsable_id, 
+          tipo_movimiento, 
+          monto, 
+          descripcion,
+          caja_sucursal_id
+        )
+        SELECT 
+          $1,
+          'egreso',
+          monto,
+          COALESCE(descripcion, 'Egreso de operación'),
+          sucursal_id
+        FROM updated_egresos
+        RETURNING 1
+      )
+      UPDATE cajas_sucursales cs
+      SET monto_final_esperado = COALESCE(cs.monto_final_esperado, 0) - te.total
+      FROM total_egresos te
+      WHERE cs.sucursal_id = te.sucursal_id
+      RETURNING (SELECT json_agg(ue.*) FROM updated_egresos ue) as egresos_actualizados`,
+      [usuario_id, ruta_id]
+    );
+
+    await client.query('COMMIT');
+    
+    return updateResult.rows[0]?.egresos_actualizados || null;
+    
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 export default {
   createEgresoOperacion,
   getAllEgresosOperacionPendientes,
   getSumEgresosOperacionPendientes,
   deleteEgresoOperacion,
   updateEgresoOperacion,
+  confirmarEgresosOperacion,
 };

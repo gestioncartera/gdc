@@ -262,6 +262,7 @@ export const PrestamosPendientes = async (req: Request, res: Response): Promise<
     }
     return res.status(200).json(prestamosPendientes);
   } catch (error) {
+      //console.error(error);
     return res.status(500).send({ error: 'Error al obtener los préstamos pendientes' });
   }
 }
