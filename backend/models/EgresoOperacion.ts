@@ -98,6 +98,15 @@ export const getSumEgresosOperacionPendientes = async (usuario_id: number,ruta_i
   return Number(result.rows[0].total )|| 0;
 };
 
+// Obtener egresos pendientes por usuario_id 
+export const getEgresosPendientesByUsuarioId = async (usuario_id: number): Promise<EgresoOperacion[]> => {
+  const result = await db.query(`SELECT * 
+    FROM egresos_operacion
+    WHERE estado_egreso = 'pendiente' AND usuario_id = $1`,
+    [usuario_id]);
+  return result.rows;
+}
+
 // Eliminar egreso de operación
 export const deleteEgresoOperacion = async (egreso_id: number): Promise<EgresoOperacion | null> => {
   const result = await db.query(
@@ -196,4 +205,5 @@ export default {
   deleteEgresoOperacion,
   updateEgresoOperacion,
   confirmarEgresosOperacion,
+  getEgresosPendientesByUsuarioId
 };

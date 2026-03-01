@@ -9,6 +9,7 @@ export interface CajaDiaria {
   monto_base_inicial: number;
   monto_final_esperado?: number;
   monto_final_real?: number;
+  monto_recaudo?: number;
   diferencia?: number;
   estado?:  string;
   created_at?: Date | string;
@@ -186,7 +187,7 @@ export const updateBase = async (caja_diaria_id: number, nuevoMontoBase: number)
 }
 
 //cerrar caja diaria y actualizar el monto final real, diferencia y estado
-/* export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real: number): Promise<CajaDiaria | null> => {
+export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real: number): Promise<CajaDiaria | null> => {
   const client = await db.connect();
   try {    await client.query('BEGIN');
 
@@ -202,6 +203,15 @@ export const updateBase = async (caja_diaria_id: number, nuevoMontoBase: number)
     }
     const monto_final_esperado = resCaja.rows[0].monto_final_esperado || 0;
     const diferencia = monto_final_real - monto_final_esperado;
+
+    const sucursal_id = await client.query(
+      `SELECT s.sucursal_id 
+      FROM cajas_diarias cd
+      inner join  usuarios u on cd.usuario_id = u.usuario_id
+      where cd.caja_diaria_id = $1`,
+      [caja_diaria_id]
+    );
+
     
     // Actualizar la caja diaria
     const result = await client.query(
@@ -214,49 +224,40 @@ export const updateBase = async (caja_diaria_id: number, nuevoMontoBase: number)
       [monto_final_real, diferencia, caja_diaria_id]
     );
 
-    // Actualizar el saldo de la caja sucursal
-    const resSucursal = await client.query(
-      `SELECT sucursal_id FROM cajas_diarias WHERE caja_diaria_id = $1`,
-      [caja_diaria_id]
-    );
-    const sucursal_id = resSucursal.rows[0].sucursal_id;
-
-      const cajaSucursal=await client.query(
-      `UPDATE cajas_sucursales
-      SET saldo_actual = saldo_actual + $1
-      WHERE sucursal_id = $2`,
-      [diferencia, sucursal_id]
-    );
-
-  const movtoCajaSucursal = await client.query(
-      `INSERT INTO movimientos_caja_sucursal (
-        caja_sucursal_id,
-        usuario_responsable_id,
-        tipo_movimiento,
-        monto,          
-        descripcion,
-        fecha_movimiento
-      ) VALUES (
-        $1,
-        (SELECT usuario_id FROM cajas_diarias WHERE caja_diaria_id = $2),
-        'ingreso',
-        $3,
-        'Cierre de caja diaria',
-        NOW()
-      ) RETURNING *`,
-      [cajaSucursal.rows[0].caja_sucursal_id,
-      result.rows[0].usuario_id, 
-      caja_diaria_id, 
-      Number(cajaDiaria[0]?.monto_final_esperado ?? 0) + Number(egresos)-Number(cajaDiaria[0]?.monto_base_inicial ?? 0),]
-    );
-
-
-{"cobros":cobrosByRutaId,
-      "Base_Inicial":cajaDiaria[0].monto_base_inicial,
-      "recaudado":Number(cajaDiaria[0]?.monto_final_esperado ?? 0) + Number(egresos)-Number(cajaDiaria[0]?.monto_base_inicial ?? 0),
-      "egresos":egresos,
-      "total":cajaDiaria[0].monto_final_esperado
-    }    
+    //registar el movimiento en la caja sucursal
+    
+      const movto = await client.query(
+        `INSERT INTO movimientos_caja_sucursal (
+        usuario_id, 
+        caja_sucursal_id, 
+        monto, 
+        tipo_movimiento, 
+        descripcion, 
+        fecha_movimiento)
+         VALUES (
+         $1, 
+         (SELECT caja_sucursal_id FROM cajas_sucursales WHERE sucursal_id = $3),
+         $2, 
+         $4, 
+         $5, 
+         $6) RETURNING *`,
+        [result.rows[0].usuario_id, 
+          result.rows[0].monto_recaudo || 0, 
+          sucursal_id,
+          'ingreso', 
+          'recaudos Cobros '+ new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
+          new Date()]
+      );
+      if (movto.rowCount === 0) {
+        throw new Error('Error al registrar el movimiento en la caja sucursal');
+      }
+       await client.query(
+        `UPDATE cajas_sucursales
+          SET saldo_actual = saldo_actual + $1,
+              fecha_ultima_actualizacion = NOW()
+          WHERE sucursal_id = $2`,
+        [result.rows[0].monto_recaudo || 0, sucursal_id]
+      );
 
 
   
@@ -268,7 +269,7 @@ export const updateBase = async (caja_diaria_id: number, nuevoMontoBase: number)
   } finally {
     client.release();
   }
-} */
+} 
 
 // Eliminar una caja diaria
 export const deleteCajaDiaria = async (id: number): Promise<void> => {
@@ -285,5 +286,6 @@ export default {
   updateCajaDiaria,
   updateBase,
   deleteCajaDiaria,
-  validarFondosCajaPrincipal
+  validarFondosCajaPrincipal,
+  cerrarCajaDiaria
 };

@@ -48,7 +48,8 @@ export const createCobro = async (cobro: Cobro): Promise<Cobro | null> => {
     // Se usa COALESCE para tratar nulos como 0 si es la primera suma
     await client.query(
       `UPDATE cajas_diarias 
-       SET monto_final_esperado = COALESCE(monto_final_esperado, 0) + $1
+       SET monto_final_esperado = COALESCE(monto_final_esperado, 0) + $1,
+       monto_recaudo = COALESCE(monto_recaudo, 0) + $1
        WHERE caja_diaria_id = $2`,
       [cobro.monto_cobrado, 
         cajaId]
@@ -160,6 +161,17 @@ export const getCobrosByPrestamoId = async (prestamo_id: number): Promise<Cobro[
   return result.rows || null;
 };
 
+//obtener cobros pendientes  por usuario ID
+export const getCobrosPendientesByUsuarioId = async (usuario_id: number): Promise<Cobro[]|any> => {
+  const result = await db.query
+  (`SELECT *
+    FROM cobros c
+    WHERE c.usuario_id = $1 and c.estado='pendiente'
+    order by cl.cliente_id,c.fecha_cobro desc`,
+     [usuario_id]);
+  return result.rows || null;
+};
+
 // Actualizar un cobro
 export const updateCobro = async (cobro_id: number, cobro: Cobro): Promise<Cobro | null> => {
   const result = await db.query(
@@ -214,10 +226,12 @@ export const updateMontoCobroConCaja = async (
     // 3. Actualizar la caja diaria (sumar la diferencia)
     await client.query(
       `UPDATE cajas_diarias 
-       SET monto_final_esperado = COALESCE(monto_final_esperado, 0) + $1
+       SET monto_final_esperado = COALESCE(monto_final_esperado, 0) + $1,
+        monto_recaudo = COALESCE(monto_recaudo, 0) + $1
        WHERE caja_diaria_id = $2`,
       [diferencia, cajaId]
     );
+
 
     await client.query('COMMIT');
     return resUpdateCobro.rows[0];
@@ -260,6 +274,7 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
     procesados: [] as number[],
     errores: [] as { id: number, motivo: string }[]
   };
+ 
 
   try {
     await client.query('BEGIN');
@@ -267,7 +282,13 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
     // 1. Obtener todos los datos necesarios en UNA sola consulta
     // Esto reduce drásticamente el tiempo
     const cobrosQuery = await client.query(
-      `SELECT c.cobro_id, c.monto_cobrado, c.prestamo_id, c.estado ,p.estado_prestamo
+      `SELECT c.cobro_id, 
+      c.monto_cobrado, 
+      c.prestamo_id, 
+      c.estado ,
+      p.estado_prestamo,
+      p.sucursal_id,
+      c.usuario_id
        FROM cobros c 
        inner join prestamos p on c.prestamo_id = p.prestamo_id
        WHERE c.cobro_id = ANY($1) FOR UPDATE`,
@@ -301,6 +322,7 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
                 [cobro.monto_cobrado, cobro.prestamo_id]
             );
 
+            
             resultados.procesados.push(cobro.cobro_id);
             await client.query(`RELEASE SAVEPOINT sp_${cobro.cobro_id}`);
 
@@ -309,6 +331,8 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
             resultados.errores.push({ id: cobro.cobro_id, motivo: err.message });
         }
     }
+ 
+  
 
     // Identificar cobros que no se encontraron en la BD
     const encontradosIds = cobrosAProcesar.map(c => c.cobro_id);
@@ -335,6 +359,7 @@ export default {
   getCobrosByRutaId,
   getCobroInfoById,
   getCobrosPendientesByPrestamoId,
+  getCobrosPendientesByUsuarioId,
   updateMontoCobroConCaja,
   updateCobro,
   deleteCobro,
