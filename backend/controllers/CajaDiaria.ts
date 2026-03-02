@@ -181,5 +181,6 @@ export default {
   getCajasDiariasByRuta,
   getCajaDiariaAbiertaByUsuario,
   updateCajaDiaria,
-  updateBase
+  updateBase,
+  cerrarCajaDiaria
 };

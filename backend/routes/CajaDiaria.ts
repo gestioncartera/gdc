@@ -8,6 +8,7 @@ router.get('/getCajasDiarias', auth, CajaDiaria.getAllCajasDiarias);
 router.get('/getCajaDiariaAbiertaByUsuario/:usuario_id', auth, CajaDiaria.getCajaDiariaAbiertaByUsuario);
 router.put('/updateCajaDiaria/:id', auth, CajaDiaria.updateCajaDiaria);
 router.patch('/updateBase/:caja_diaria_id', auth, CajaDiaria.updateBase);
+router.patch('/cerrarCajaDiaria/:caja_diaria_id', auth, CajaDiaria.cerrarCajaDiaria);
 router.delete('/deleteCajaDiaria/:id', auth, CajaDiaria.getCajaDiariaById);
 
 export default router;
