@@ -29,9 +29,28 @@ export async function createRuta(ruta: Ruta): Promise<Ruta|null> {
   return newRuta.rows[0]||null;
 }
 
-
 // Obtener todas las rutas
 export async function getRutas(idSucursal: number): Promise<Ruta[]|any[] > {
+  const result = await db.query
+  (`SELECT 
+    r.*,
+    COALESCE(u.nombres || ' ' || u.apellidos, 'No asignado') AS cobrador
+FROM public.rutas r
+where r.sucursal_id = $1
+order BY r.ruta_id ASC
+    `,
+    [
+      idSucursal
+    ]
+
+  );
+  
+  return result.rows;
+}
+
+
+// Obtener todas las rutas
+export async function getRutasCobros(idSucursal: number): Promise<Ruta[]|any[] > {
   const result = await db.query
   (`SELECT 
     r.*,
@@ -40,7 +59,7 @@ FROM public.rutas r
 LEFT JOIN public.asignaciones_rutas ar  ON r.ruta_id = ar.ruta_id AND ar.estado = 'activo'
 LEFT JOIN public.usuarios u  ON ar.usuario_id = u.usuario_id
 inner join cajas_diarias cd on u.usuario_id = cd.usuario_id and cd.estado='abierta'
-inner join cobros c on c.usuario_id=u.usuario_id and c.estado='pendiente'
+left outer join cobros c on c.usuario_id=u.usuario_id and c.estado='pendiente'
 where r.sucursal_id = $1
 order BY r.ruta_id ASC
     `,
@@ -98,6 +117,7 @@ export async function deleteRuta(id: number): Promise<Ruta | null> {
 export default {
   createRuta,
   getRutas,
+  getRutasCobros,
   getRutaById,
   updateRuta,
   deleteRuta

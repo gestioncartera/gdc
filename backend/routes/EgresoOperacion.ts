@@ -4,7 +4,7 @@ import auth from "../middlewares/auth";
 
 const router = express.Router();
 
-router.post("/createEgresoOperacion", auth, EgresoOperacion.createEgresoOperacion);
+router.post("/createEgresoOperacion", auth, EgresoOperacion.createEgresoOperacion); 
 router.get("/getAllEgresosOperacionPendientes/:usuario_id", auth, EgresoOperacion.getAllEgresosOperacionPendientes);
 router.delete("/egresooperacion/:id", auth, EgresoOperacion.deleteEgresoOperacion);
 router.put("/egresooperacion/:id", auth, EgresoOperacion.updateEgresoOperacion);

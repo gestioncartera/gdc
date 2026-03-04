@@ -34,6 +34,20 @@ export const getAllEgresosOperacionPendientes = async (req: Request, res: Respon
   }
 };
 
+// Obtener egresos pendientes por usuario_id 
+export const getEgresosPendientesByUsuarioId = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const usuario_id = parseInt(req.params.usuario_id);
+    const egresosOperacion = await EgresoOperacion.getEgresosPendientesByUsuarioId(usuario_id);
+    if (!egresosOperacion) {
+      return res.status(404).send({ error: 'No se encontraron egresos pendientes para el usuario' });
+    }
+    return res.status(200).json(egresosOperacion);
+  } catch (error) {
+    return res.status(500).send({ error: 'Error al obtener los egresos de operación' });
+  }
+}
+
 // Eliminar egreso de operación
 export const deleteEgresoOperacion = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -88,6 +102,7 @@ export const confirmarEgresosOperacion = async (req: Request, res: Response): Pr
 export default {
   createEgresoOperacion,
   getAllEgresosOperacionPendientes,
+  getEgresosPendientesByUsuarioId,
   deleteEgresoOperacion,
   updateEgresoOperacion,
   confirmarEgresosOperacion
