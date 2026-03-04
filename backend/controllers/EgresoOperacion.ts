@@ -80,7 +80,7 @@ export const updateEgresoOperacion = async (req: Request, res: Response): Promis
 export const confirmarEgresosOperacion = async (req: Request, res: Response): Promise<Response> => {
   try {
 
-    const  usuario_id = parseInt(req.body.usuario_id);
+    const  usuario_id = parseInt(req.params.usuario_id);
     if (!usuario_id ) {
       return res.status(400).send({ error: 'Faltan parámetros requeridos' });
     }

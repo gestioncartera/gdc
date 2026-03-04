@@ -8,6 +8,6 @@ router.post("/createEgresoOperacion", auth, EgresoOperacion.createEgresoOperacio
 router.get("/getAllEgresosOperacionPendientes/:usuario_id", auth, EgresoOperacion.getAllEgresosOperacionPendientes);
 router.delete("/egresooperacion/:id", auth, EgresoOperacion.deleteEgresoOperacion);
 router.put("/egresooperacion/:id", auth, EgresoOperacion.updateEgresoOperacion);
-router.post("/confirmarEgresosOperacion", auth, EgresoOperacion.confirmarEgresosOperacion);
+router.post("/confirmarEgresosOperacion/:usuario_id", auth, EgresoOperacion.confirmarEgresosOperacion);
 
 export default router;
