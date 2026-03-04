@@ -179,7 +179,7 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
         RETURNING 1
       )
       UPDATE cajas_sucursales cs
-      SET monto_final_esperado = COALESCE(cs.monto_final_esperado, 0) - te.total
+      SET saldo_actual = COALESCE(cs.saldo_actual, 0) - te.total
       FROM total_egresos te
       WHERE cs.sucursal_id = te.sucursal_id
       RETURNING (SELECT json_agg(ue.*) FROM updated_egresos ue) as egresos_actualizados`,
