@@ -89,12 +89,13 @@ export const getAllEgresosOperacionPendientes = async (usuario_id: number,ruta_i
 };  
 
 //obtener sumatoria de egresos pendientes
-export const getSumEgresosOperacionPendientes = async (usuario_id: number,ruta_id: number): Promise<number> => {
+export const getSumEgresosOperacion = async (usuario_id: number,ruta_id: number,fecha_apertura: Date): Promise<number> => {
   const result = await db.query(`SELECT SUM(monto) as total
     FROM egresos_operacion
-    WHERE estado_egreso = 'pendiente' AND usuario_id = $1 AND ruta_id = $2`,
+    WHERE  usuario_id = $1 AND ruta_id = $2 AND fecha_gasto = $3`,
     [usuario_id,
-    ruta_id]);
+    ruta_id,
+    fecha_apertura]);
   return Number(result.rows[0].total )|| 0;
 };
 
@@ -167,19 +168,23 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
           tipo_movimiento, 
           monto, 
           descripcion,
-          caja_sucursal_id
+          caja_sucursal_id,
+          estado_movto
         )
         SELECT 
           $1,
           'egreso',
           monto,
-          COALESCE(descripcion, 'Egreso de operación'),
-          sucursal_id
+          COALESCE(conceto, 'Egreso de operación'),
+          sucursal_id,
+          'confirmado'
         FROM updated_egresos
         RETURNING 1
       )
       UPDATE cajas_sucursales cs
-      SET saldo_actual = COALESCE(cs.saldo_actual, 0) - te.total
+      SET saldo_actual = COALESCE(cs.saldo_actual, 0) - te.total,
+      fecha_ultimo_movimiento = NOW(),
+
       FROM total_egresos te
       WHERE cs.sucursal_id = te.sucursal_id
       RETURNING (SELECT json_agg(ue.*) FROM updated_egresos ue) as egresos_actualizados`,
@@ -201,7 +206,7 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
 export default {
   createEgresoOperacion,
   getAllEgresosOperacionPendientes,
-  getSumEgresosOperacionPendientes,
+  getSumEgresosOperacion,
   deleteEgresoOperacion,
   updateEgresoOperacion,
   confirmarEgresosOperacion,

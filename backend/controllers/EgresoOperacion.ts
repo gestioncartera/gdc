@@ -100,7 +100,7 @@ export const confirmarEgresosOperacion = async (req: Request, res: Response): Pr
     }
     return res.status(200).json(egresosOperacion);
   } catch (error) {
-    console.error(error);
+    
     return res.status(500).send({ error: 'Error al confirmar los egresos de operación' });
   }
 };
