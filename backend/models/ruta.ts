@@ -61,9 +61,11 @@ FROM public.rutas r
 LEFT JOIN public.asignaciones_rutas ar  ON r.ruta_id = ar.ruta_id AND ar.estado = 'activo'
 LEFT JOIN public.usuarios u  ON ar.usuario_id = u.usuario_id
 inner join cajas_diarias cd on u.usuario_id = cd.usuario_id and cd.estado='abierta'
-left outer join cobros c on c.usuario_id=u.usuario_id and c.estado='pendiente'
+inner join cobros c on c.usuario_id=u.usuario_id and c.estado='pendiente'
 where r.sucursal_id = $1
+group by r.ruta_id, u.nombres, u.apellidos
 order BY r.ruta_id ASC
+
     `,
     [
       idSucursal

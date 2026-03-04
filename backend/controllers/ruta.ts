@@ -41,6 +41,7 @@ const getRutasCobros = async (req: Request, res: Response) => {
             ? res.status(404).send({ message: 'No se encontraron rutas con cobros pendientes' })
             : res.status(200).json(rutas);
     } catch (error) {
+            console.error(error);
         return res.status(500).send({ error: 'Error al obtener las rutas con cobros pendientes' });
     }
 };
