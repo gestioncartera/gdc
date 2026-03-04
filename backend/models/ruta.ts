@@ -36,6 +36,8 @@ export async function getRutas(idSucursal: number): Promise<Ruta[]|any[] > {
     r.*,
     COALESCE(u.nombres || ' ' || u.apellidos, 'No asignado') AS cobrador
 FROM public.rutas r
+LEFT JOIN public.asignaciones_rutas ar  ON r.ruta_id = ar.ruta_id AND ar.estado = 'activo'
+LEFT JOIN public.usuarios u  ON ar.usuario_id = u.usuario_id
 where r.sucursal_id = $1
 order BY r.ruta_id ASC
     `,
