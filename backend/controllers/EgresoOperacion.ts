@@ -80,16 +80,21 @@ export const updateEgresoOperacion = async (req: Request, res: Response): Promis
 export const confirmarEgresosOperacion = async (req: Request, res: Response): Promise<Response> => {
   try {
 
-    const { usuario_id, ruta_id } = req.body;
-    if (!usuario_id || !ruta_id) {
+    const  usuario_id = parseInt(req.body.usuario_id);
+    if (!usuario_id ) {
       return res.status(400).send({ error: 'Faltan parámetros requeridos' });
     }
 
-    const asignacion = await AsignacionRuta.isRutaAsignada(ruta_id,usuario_id);
+    const ruta_id = await AsignacionRuta.getRutaAsignadaUsuario(usuario_id);
+    if (!ruta_id) {
+      return res.status(404).send({ error: 'No se encontró la ruta asignada al usuario' });
+    }
+
+    const asignacion = await AsignacionRuta.isRutaAsignada(ruta_id.ruta_id,usuario_id);
     if (!asignacion) {
       return res.status(404).send({ error: 'No se encontró la ruta asignada al usuario' });
     }
-    const egresosOperacion = await EgresoOperacion.confirmarEgresosOperacion(usuario_id, ruta_id);
+    const egresosOperacion = await EgresoOperacion.confirmarEgresosOperacion(usuario_id, ruta_id.ruta_id);
     if (!egresosOperacion) {
       return res.status(404).send({ error: 'No se encontraron egresos de operación pendientes' });
     }
