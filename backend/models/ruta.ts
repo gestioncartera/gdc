@@ -40,6 +40,7 @@ FROM public.rutas r
 LEFT JOIN public.asignaciones_rutas ar  ON r.ruta_id = ar.ruta_id AND ar.estado = 'activo'
 LEFT JOIN public.usuarios u  ON ar.usuario_id = u.usuario_id
 inner join cajas_diarias cd on u.usuario_id = cd.usuario_id and cd.estado='abierta'
+inner join cobros c on c.usuario_id=u.usuario_id and c.estado='pendiente'
 where r.sucursal_id = $1
 order BY r.ruta_id ASC
     `,
@@ -48,6 +49,7 @@ order BY r.ruta_id ASC
     ]
 
   );
+  
   return result.rows;
 }
 

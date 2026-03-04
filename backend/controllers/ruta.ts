@@ -27,7 +27,8 @@ const getRutas = async (req: Request, res: Response) => {
         ? res.status(404).send({ message: 'No se encontraron rutas' })
         : res.status(200).json(rutas);
     } catch (error) {
-        return res.status(500).send({ error: 'Error al obtener las rutas' });
+        
+        return res.status(500).send({ error: 'Error al obtener la ruta' });
     }
 };
 
@@ -41,7 +42,7 @@ const getRutaById = async (req: Request, res: Response) => {
           : res.status(200).json(rutaEncontrada);
     } catch (error) {
        console.error(error);
-        return res.status(500).send({ error: 'Error al obtener la ruta' });
+        return res.status(500).send({ error: 'Error al obtener las rutas' });
     }
 };
 
