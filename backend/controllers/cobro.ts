@@ -137,6 +137,7 @@ export const getCobrosByRutaId = async (req: Request, res: Response): Promise<Re
     }
 
     const usuario_id = cajaDiaria[0].usuario_id;
+   
 
     const egresos = await EgresoOperacion.getSumEgresosOperacion(usuario_id,ruta_id,cajaDiaria[0].fecha_apertura );
 
@@ -148,6 +149,7 @@ export const getCobrosByRutaId = async (req: Request, res: Response): Promise<Re
     }    
     );
   } catch (error) {
+    console.error(error);
     return res.status(500).send({ error: 'Error al obtener los cobros por ruta' });
   }
 };

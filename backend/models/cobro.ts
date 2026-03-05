@@ -167,7 +167,7 @@ export const getCobrosPendientesByUsuarioId = async (usuario_id: number): Promis
   (`SELECT *
     FROM cobros c
     WHERE c.usuario_id = $1 and c.estado='pendiente'
-    order by cl.cliente_id,c.fecha_cobro desc`,
+    order by c.fecha_cobro desc`,
      [usuario_id]);
   return result.rows || null;
 };

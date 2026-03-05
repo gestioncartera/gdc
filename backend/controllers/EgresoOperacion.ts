@@ -15,9 +15,20 @@ export const createEgresoOperacion = async (req: Request, res: Response): Promis
     return (!newEgresoOperacion) 
     ? res.status(500).send({ error: 'No se pudo crear el egreso de operación' }) 
     : res.status(201).json(newEgresoOperacion);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send({ error: 'Error al crear el egreso de operación' });
+  } catch (error: any)  {
+   
+
+    const erroresNegocio = [
+      'No tienes una caja diaria abierta',
+      'Fondos insuficientes en caja'
+    ];
+
+     const esErrorNegocio = erroresNegocio.some(msg => error.message?.includes(msg));
+     if (esErrorNegocio) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(500).send({ error: 'Error interno del servidor'  });
   }
 };
 
@@ -35,6 +46,7 @@ export const getAllEgresosOperacionPendientes = async (req: Request, res: Respon
     const egresosOperacion = await EgresoOperacion.getAllEgresosOperacionPendientes(usuario_id, ruta_id.ruta_id);
     return res.status(200).json(egresosOperacion);
   } catch (error) {
+    console.error(error);
     return res.status(500).send({ error: 'Error al obtener los egresos de operación' });
   }
 };
@@ -105,7 +117,7 @@ export const confirmarEgresosOperacion = async (req: Request, res: Response): Pr
     }
     return res.status(200).json(egresosOperacion);
   } catch (error) {
-    
+    console.error(error);
     return res.status(500).send({ error: 'Error al confirmar los egresos de operación' });
   }
 };

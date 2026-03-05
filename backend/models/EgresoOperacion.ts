@@ -1,5 +1,6 @@
 import e from "express";
 import  db   from "../db/db";
+import ruta from "./ruta";
 
 export interface EgresoOperacion {
   egreso_id?: number;
@@ -92,21 +93,21 @@ export const getAllEgresosOperacionPendientes = async (usuario_id: number,ruta_i
 export const getSumEgresosOperacion = async (usuario_id: number,ruta_id: number,fecha_apertura: Date): Promise<number> => {
   const result = await db.query(`SELECT SUM(monto) as total_egresos
     FROM egresos_operacion
-    WHERE  usuario_id = $1 AND ruta_id = $2 AND date(fecha_gasto) = date($3)`,
+    WHERE  usuario_id = $1 AND ruta_id = $2 AND date(fecha_gasto) = date($3) and estado_egreso <> 'rechazado'`,
     [usuario_id,
     ruta_id,
     fecha_apertura]);
-  return Number(result.rows[0].total )|| 0;
+  return Number(result.rows[0].total_egresos )|| 0;
 };
-
+//
 //Obtener egresos confirmados por usuario_id y ruta_id de la jornada
-export const getEgresosConfirmadosDiarios = async (usuario_id: number, ruta_id: number,fecha_apertura: Date): Promise<EgresoOperacion[]> => {
+export const getSumEgresosOperacionConfirmados = async (usuario_id: number, ruta_id: number,fecha_apertura: Date): Promise<number> => {
   const result = await db.query(`SELECT SUM(monto) as total_egresos
     FROM egresos_operacion 
     WHERE estado_egreso = 'confirmado' AND usuario_id = $1 AND ruta_id = $2 AND fecha_gasto = $3`,
     [usuario_id, ruta_id, fecha_apertura]);
-  return result.rows;
-}
+  return Number(result.rows[0].total_egresos )|| 0;
+};
 
 // Obtener egresos pendientes por usuario_id 
 export const getEgresosPendientesByUsuarioId = async (usuario_id: number): Promise<EgresoOperacion[]> => {
@@ -161,7 +162,7 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
           AND eo.estado_egreso = 'pendiente'
         RETURNING 
           eo.monto, 
-          eo.descripcion,
+          eo.concepto,
           (SELECT sucursal_id FROM usuarios WHERE usuario_id = $1) as sucursal_id
       ),
       total_egresos AS (
@@ -184,7 +185,7 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
           $1,
           'egreso',
           monto,
-          COALESCE(conceto, 'Egreso de operación'),
+          COALESCE(concepto, 'Egreso de operación'),
           sucursal_id,
           'confirmado'
         FROM updated_egresos
@@ -192,7 +193,7 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
       )
       UPDATE cajas_sucursales cs
       SET saldo_actual = COALESCE(cs.saldo_actual, 0) - te.total,
-      fecha_ultimo_movimiento = NOW(),
+      fecha_ultima_actualizacion = NOW()
 
       FROM total_egresos te
       WHERE cs.sucursal_id = te.sucursal_id
@@ -216,6 +217,7 @@ export default {
   createEgresoOperacion,
   getAllEgresosOperacionPendientes,
   getSumEgresosOperacion,
+  getSumEgresosOperacionConfirmados,
   deleteEgresoOperacion,
   updateEgresoOperacion,
   confirmarEgresosOperacion,
