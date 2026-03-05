@@ -90,14 +90,23 @@ export const getAllEgresosOperacionPendientes = async (usuario_id: number,ruta_i
 
 //obtener sumatoria de egresos pendientes
 export const getSumEgresosOperacion = async (usuario_id: number,ruta_id: number,fecha_apertura: Date): Promise<number> => {
-  const result = await db.query(`SELECT SUM(monto) as total
+  const result = await db.query(`SELECT SUM(monto) as total_egresos
     FROM egresos_operacion
-    WHERE  usuario_id = $1 AND ruta_id = $2 AND fecha_gasto = $3`,
+    WHERE  usuario_id = $1 AND ruta_id = $2 AND date(fecha_gasto) = date($3)`,
     [usuario_id,
     ruta_id,
     fecha_apertura]);
   return Number(result.rows[0].total )|| 0;
 };
+
+//Obtener egresos confirmados por usuario_id y ruta_id de la jornada
+export const getEgresosConfirmadosDiarios = async (usuario_id: number, ruta_id: number,fecha_apertura: Date): Promise<EgresoOperacion[]> => {
+  const result = await db.query(`SELECT SUM(monto) as total_egresos
+    FROM egresos_operacion 
+    WHERE estado_egreso = 'confirmado' AND usuario_id = $1 AND ruta_id = $2 AND fecha_gasto = $3`,
+    [usuario_id, ruta_id, fecha_apertura]);
+  return result.rows;
+}
 
 // Obtener egresos pendientes por usuario_id 
 export const getEgresosPendientesByUsuarioId = async (usuario_id: number): Promise<EgresoOperacion[]> => {

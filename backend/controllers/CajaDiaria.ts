@@ -86,10 +86,15 @@ export const getCajaDiariaAbiertaByUsuario = async (req: Request, res: Response)
     if (!rutaAsignada) {
       return res.status(404).send({ error: 'No se encontro ruta asignada para el usuario especificado' });
     }
+
+
     const cajaDiariaAbierta = await CajaDiaria.getCajaDiariaAbiertaByUsuario(usuario_id, rutaAsignada.ruta_id);
     if (!cajaDiariaAbierta) {
       return res.status(404).send({ error: 'No se encontró una caja diaria abierta para el usuario especificado' });
     }
+
+    //obtener los egresos
+
     return res.status(200).json(cajaDiariaAbierta);
   } catch (error) {
     return res.status(500).send({ error: 'Error al obtener la caja diaria abierta por usuario' });

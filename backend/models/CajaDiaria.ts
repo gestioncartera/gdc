@@ -4,8 +4,8 @@ export interface CajaDiaria {
   caja_diaria_id?: number;
   usuario_id: number;
   ruta_id: number;
-  fecha_apertura?: Date | string;
-  fecha_cierre?: Date | string;
+  fecha_apertura?: Date ;
+  fecha_cierre?: Date ;
   monto_base_inicial: number;
   monto_final_esperado?: number;
   monto_final_real?: number;

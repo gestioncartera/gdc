@@ -5,6 +5,7 @@ import ruta from "../models/ruta";
 import EgresoOperacion from "../models/EgresoOperacion";
 import { Request, Response } from "express";
 import CajaDiaria from "../models/CajaDiaria";
+import { now } from "moment";
 
 
 // Crear un nuevo cobro
@@ -131,13 +132,13 @@ export const getCobrosByRutaId = async (req: Request, res: Response): Promise<Re
     }
 
     const cajaDiaria = await CajaDiaria.getCajasDiariasByRuta(ruta_id);
-    if (!cajaDiaria) {
+    if (!cajaDiaria || !cajaDiaria[0].fecha_apertura) {
       return res.status(404).send({ error: 'No se encontraron cajas diarias para la ruta especificada' });
     }
 
     const usuario_id = cajaDiaria[0].usuario_id;
 
-    const egresos = await EgresoOperacion.getSumEgresosOperacionPendientes(usuario_id,ruta_id);
+    const egresos = await EgresoOperacion.getSumEgresosOperacion(usuario_id,ruta_id,cajaDiaria[0].fecha_apertura );
 
     return res.status(200).json({"cobros":cobrosByRutaId,
       "Base_Inicial":cajaDiaria[0].monto_base_inicial,

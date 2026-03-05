@@ -5,6 +5,11 @@ import { Request, Response } from "express";
 // Crear egreso de operación
 export const createEgresoOperacion = async (req: Request, res: Response): Promise<Response> => {
   try {
+    const ruta = await AsignacionRuta.getRutaAsignadaUsuario(req.body.usuario_id); // Obtener la ruta asignada al usuario
+    if (!ruta) {
+      return res.status(400).send({ error: 'El cobrador no tiene ruta asignada' });
+    }
+    req.body.ruta_id = ruta.ruta_id; // Agregar la ruta_id al cuerpo de la solicitud para crear el egreso de operación
     const egresoOperacion = req.body;    
     const newEgresoOperacion = await EgresoOperacion.createEgresoOperacion(egresoOperacion);
     return (!newEgresoOperacion) 
