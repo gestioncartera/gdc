@@ -77,15 +77,21 @@ export const abrirCajaDiaria = async (caja: CajaDiaria, sucursal_id: number): Pr
         monto_base_inicial, 
         monto_final_esperado,
         estado,
-        created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6,NOW()) RETURNING *`,
+        created_at,
+        monto_recaudo,
+        diferencia,
+        monto_final_real
+      ) VALUES ($1, $2, $3, $4, $5, $6,NOW(),$7,$8,$9) RETURNING *`,
       [
         caja.usuario_id,
         caja.ruta_id,
         caja.fecha_apertura || new Date().toISOString(),
         caja.monto_base_inicial,
          caja.monto_base_inicial || 0, // El monto_final_esperado inicia igual al monto_base_inicial
-        'abierta'
+        'abierta',
+        0, // monto_recaudo inicia en 0
+        0, // diferencia inicia en 0
+        0  // monto_final_real inicia en 0
       ]
     );
 
@@ -187,13 +193,13 @@ export const updateBase = async (caja_diaria_id: number, nuevoMontoBase: number)
 }
 
 //cerrar caja diaria y actualizar el monto final real, diferencia y estado
-export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real: number): Promise<CajaDiaria | null> => {
+export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real: number,egresosCaja:number): Promise<CajaDiaria | null> => {
   const client = await db.connect();
   try {    await client.query('BEGIN');
 
     // Obtener la caja diaria para calcular la diferencia 
     const resCaja = await client.query(
-      `SELECT monto_final_esperado 
+      `SELECT monto_final_esperado ,monto_recaudo
       FROM cajas_diarias 
       WHERE caja_diaria_id = $1 FOR UPDATE`,
       [caja_diaria_id]
@@ -226,7 +232,7 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
     );
 
     //registar el movimiento en la caja sucursal
-  
+  if (result.rows[0].monto_recaudo > 0 || result.rows[0].monto_recaudo ===null) {
       const movto = await client.query(
   `INSERT INTO movimientos_caja_sucursal (
     usuario_responsable_id, 
@@ -264,9 +270,52 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
           WHERE sucursal_id = $2`,
         [result.rows[0].monto_recaudo || 0, sucursal_id.rows[0].sucursal_id]
       );
+}
+
+//registrar el sobrante de la caja base
+const sobranteBase =  result.rows[0].monto_base_inicial - egresosCaja;
+if (sobranteBase > 0) {
+
+     const movto = await client.query(
+  `INSERT INTO movimientos_caja_sucursal (
+    usuario_responsable_id, 
+    monto, 
+    caja_sucursal_id, 
+    tipo_movimiento, 
+    descripcion, 
+    fecha_movimiento,
+    estado_movto)
+  VALUES (
+    $1, 
+    $2,
+    $3, 
+    $4, 
+    $5, 
+    $6,
+    'confirmado') RETURNING *`,
+  [
+    result.rows[0].usuario_id,           // $1
+    sobranteBase || 0,    // $2
+    sucursal_id.rows[0].sucursal_id,                          // $3
+    'ingreso',                             // $4
+    'Sobrante Base Caja Diaria del ' + new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), // $5
+    new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) // $6
+  ]
+);
+      if (movto.rowCount === 0) {
+        throw new Error('Error al registrar el movimiento en la caja sucursal');
+      }
+       
+       await client.query(
+        `UPDATE cajas_sucursales
+          SET saldo_actual = saldo_actual + $1,
+              fecha_ultima_actualizacion = NOW()
+          WHERE sucursal_id = $2`,
+        [sobranteBase || 0, sucursal_id.rows[0].sucursal_id]
+      );
 
 
-  
+} 
     await client.query('COMMIT');
     return result.rows[0] || null;
   } catch (error) {

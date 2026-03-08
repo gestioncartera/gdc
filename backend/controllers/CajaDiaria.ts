@@ -164,7 +164,7 @@ export const cerrarCajaDiaria = async (req: Request, res: Response): Promise<Res
     const caja_diaria_id = parseInt(req.params.caja_diaria_id);
  
     const cajaDiaria = await CajaDiaria.getCajaDiariaById(caja_diaria_id);
-    if (!cajaDiaria) {
+    if (!cajaDiaria || !cajaDiaria.fecha_apertura) {
       return res.status(404).json({ error: 'Caja diaria no encontrada' });
     }
 
@@ -183,10 +183,12 @@ export const cerrarCajaDiaria = async (req: Request, res: Response): Promise<Res
     if (egresosPendientes.length > 0) {
       return res.status(400).json({ error: 'No se puede cerrar la caja diaria porque hay egresos de operación pendientes' });
     }
+
+    const egresosCaja = await EgresoOperacion.getSumEgresosOperacionConfirmados(cajaDiaria.usuario_id, cajaDiaria.ruta_id, cajaDiaria.fecha_apertura);
     
-    const CajaDiariaCerrada = await CajaDiaria.cerrarCajaDiaria(caja_diaria_id, req.body.monto_final_real);
+    const CajaDiariaCerrada = await CajaDiaria.cerrarCajaDiaria(caja_diaria_id, req.body.monto_final_real,egresosCaja);
     if (!CajaDiariaCerrada) {
-      return res.status(404).json({ error: 'Caja diaria no encontrada' });
+      return res.status(404).json({ error: 'Caja diaria no cerrada' });
     }
 
     return res.status(200).json(CajaDiariaCerrada);
