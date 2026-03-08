@@ -111,7 +111,7 @@ export const getAllCajasDiarias = async (): Promise<CajaDiaria[] | null> => {
 // Obtener una caja diaria por ID CajaDiaria
 export const getCajaDiariaById = async (id: number): Promise<CajaDiaria | null> => {
   const result = await db.query(`SELECT * FROM cajas_diarias WHERE caja_diaria_id = $1`, [id]);
-  return result.rows[0] || null;
+    return result.rows[0] || null;
 }
 
 // Obtener cajas por usuario
@@ -201,11 +201,12 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
     if (resCaja.rowCount === 0) {
       throw new Error('Caja diaria no encontrada');
     }
+    
     const monto_final_esperado = resCaja.rows[0].monto_final_esperado || 0;
     const diferencia = monto_final_real - monto_final_esperado;
 
     const sucursal_id = await client.query(
-      `SELECT s.sucursal_id 
+      `SELECT u.sucursal_id  sucursal_id
       FROM cajas_diarias cd
       inner join  usuarios u on cd.usuario_id = u.usuario_id
       where cd.caja_diaria_id = $1`,
@@ -225,38 +226,43 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
     );
 
     //registar el movimiento en la caja sucursal
-    
+  
       const movto = await client.query(
-        `INSERT INTO movimientos_caja_sucursal (
-        usuario_id, 
-        caja_sucursal_id, 
-        monto, 
-        tipo_movimiento, 
-        descripcion, 
-        fecha_movimiento)
-         VALUES (
-         $1, 
-         (SELECT caja_sucursal_id FROM cajas_sucursales WHERE sucursal_id = $3),
-         $2, 
-         $4, 
-         $5, 
-         $6) RETURNING *`,
-        [result.rows[0].usuario_id, 
-          result.rows[0].monto_recaudo || 0, 
-          sucursal_id,
-          'ingreso', 
-          'recaudos Cobros '+ new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }),
-          new Date()]
-      );
+  `INSERT INTO movimientos_caja_sucursal (
+    usuario_responsable_id, 
+    monto, 
+    caja_sucursal_id, 
+    tipo_movimiento, 
+    descripcion, 
+    fecha_movimiento,
+    estado_movto)
+  VALUES (
+    $1, 
+    $2,
+    $3, 
+    $4, 
+    $5, 
+    $6,
+    'confirmado') RETURNING *`,
+  [
+    result.rows[0].usuario_id,           // $1
+    result.rows[0].monto_recaudo || 0,    // $2
+    sucursal_id.rows[0].sucursal_id,                          // $3
+    'ingreso',                             // $4
+    'recaudos Cobros ' + new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), // $5
+    new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) // $6
+  ]
+);
       if (movto.rowCount === 0) {
         throw new Error('Error al registrar el movimiento en la caja sucursal');
       }
+       
        await client.query(
         `UPDATE cajas_sucursales
           SET saldo_actual = saldo_actual + $1,
               fecha_ultima_actualizacion = NOW()
           WHERE sucursal_id = $2`,
-        [result.rows[0].monto_recaudo || 0, sucursal_id]
+        [result.rows[0].monto_recaudo || 0, sucursal_id.rows[0].sucursal_id]
       );
 
 
