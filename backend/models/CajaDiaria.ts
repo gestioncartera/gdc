@@ -266,9 +266,9 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
        await client.query(
         `UPDATE cajas_sucursales
           SET saldo_actual = saldo_actual + $1,
-              fecha_ultima_actualizacion = NOW()
+              fecha_ultima_actualizacion = $3
           WHERE sucursal_id = $2`,
-        [result.rows[0].monto_recaudo || 0, sucursal_id.rows[0].sucursal_id]
+        [result.rows[0].monto_recaudo || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })]
       );
 }
 
@@ -309,9 +309,9 @@ if (sobranteBase > 0) {
        await client.query(
         `UPDATE cajas_sucursales
           SET saldo_actual = saldo_actual + $1,
-              fecha_ultima_actualizacion = NOW()
+              fecha_ultima_actualizacion = $3
           WHERE sucursal_id = $2`,
-        [sobranteBase || 0, sucursal_id.rows[0].sucursal_id]
+        [sobranteBase || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })]
       );
 
 
