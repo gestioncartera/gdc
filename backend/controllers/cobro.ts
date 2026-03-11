@@ -34,9 +34,15 @@ export const createCobro = async (req: Request, res: Response): Promise<Response
     //Validar que el cobrador sea el asignado a la ruta del cliente del prestamo
     const cobradorPrestamo= await prestamo.getCobradorByPrestamoId(req.body.prestamo_id);
     //console.log('Cobrador asignado al préstamo:', cobradorPrestamo,req.body.usuario_id);
-if(cobradorPrestamo.usuario_id!==req.body.usuario_id){
+
+    if(cobradorPrestamo.usuario_id!==req.body.usuario_id){
   return res.status(400).json({ error: 'El usuario no es el cobrador asignado para este préstamo' });
 }
+
+    //validar que el monto del cobro no sea mayor al monto del prestamo
+    if (req.body.monto_cobrado > prestamoExistente.saldo_pendiente) {
+      return res.status(400).send({ error: 'El monto del cobro no puede ser mayor al saldo pendiente del préstamo' });
+    }
 
     const newCobro = await cobro.createCobro(req.body);
     return (!newCobro) 
