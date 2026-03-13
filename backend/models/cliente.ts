@@ -113,6 +113,20 @@ export async function getClientesByUser(id_usuario: number): Promise<Cliente[]|a
   return result.rows || null;
 }
 
+export async function getClientesRutaUser(id_usuario: number): Promise<Cliente[]|any[]> {
+  const result = await db.query(`SELECT distinct clientes.cliente_id,
+     clientes.Nombres ||' '||  clientes.Apellidos AS nombreCliente,
+    clientes.direccion AS direccionCliente,
+    clientes.telefono AS telefonoCliente
+    FROM asignaciones_rutas ar
+    inner JOIN rutas ON ar.ruta_id = rutas.ruta_id
+    inner JOIN clientes  ON rutas.ruta_id = clientes.id_ruta
+    WHERE ar.usuario_id = $1 and ar.estado = 'activo' `,
+    [id_usuario]);
+ console.log(result.rows);
+  return result.rows || null;
+}
+
 // Actualizar un cliente
 export async function updateCliente( cliente: Cliente): Promise<Cliente|null> {
   const updatedCliente = await db.query(
@@ -171,6 +185,7 @@ export default{
   getClientesByRuta,
   getClientesByRutaPrestamo,
   getClientesByUser,
+  getClientesRutaUser,
   getClientesConPrestamosActivos,
   updateCliente,
   deleteCliente,

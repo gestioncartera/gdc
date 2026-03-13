@@ -132,6 +132,27 @@ const getClientesByUser = async (req: Request, res: Response) => {
     }
 };
 
+//getClientesRutaUser
+
+const getClientesRutaUser = async (req: Request, res: Response) => {
+    try { 
+       
+        const id_usuario = parseInt(req.params.id_usuario);
+        const existeUsuario = await usuario.getUsuarioById(id_usuario);
+        if (!existeUsuario) {
+            return res.status(400).send({ error: 'El cobrador especificado no existe' });
+        }
+
+        const clientesEncontrado = await cliente.getClientesRutaUser(id_usuario);
+          return clientesEncontrado.length===0
+            ? res.status(404).send({ message: 'Cobrador no tiene asignada ruta o la Ruta no tiene clientes' })
+            : res.status(200).json(clientesEncontrado);
+    }
+        catch (error) {
+        return res.status(500).send({ error: 'Error al obtener el cliente' });
+    }
+};
+
 //listar clientes con prestamos activos
 const getClientesConPrestamosActivos = async (req: Request, res: Response) => {
     try {
@@ -208,6 +229,7 @@ export default{
     getClientesByRuta,
     getClientesByRutaPrestamo,
     getClientesByUser,
+    getClientesRutaUser,
     getClientesConPrestamosActivos,
     updateCliente,
     deleteCliente,

@@ -13,6 +13,7 @@ router.get('/getClientesByRutaPrestamo/:id_ruta', auth, cliente.getClientesByRut
 router.get('/getClientesConPrestamosActivos/:sucursal_id', auth, cliente.getClientesConPrestamosActivos);
 router.put('/updateCliente', auth, cliente.updateCliente);
 router.get('/getClientesByUser/:id_usuario', auth, cliente.getClientesByUser);
+router.get('/getClientesRutaUser/:id_usuario', auth, cliente.getClientesRutaUser);
 router.patch('/actualizarOrdenClientes/:id_ruta', auth, cliente.actualizarOrdenClientes);
 router.delete('/deleteCliente/:id', auth, cliente.deleteCliente);
 
