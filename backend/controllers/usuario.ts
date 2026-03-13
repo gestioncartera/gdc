@@ -190,7 +190,9 @@ export const login = async (req: Request, res: Response) => {
         usuario_id: usuarioEncontrado.usuario_id,
         tipo_usuario: usuarioEncontrado.tipo_usuario,
         sucursal_id: usuarioEncontrado.sucursal_id,
-        nombres:usuarioEncontrado.nombres }
+        nombres:usuarioEncontrado.nombres,
+        apellidos:usuarioEncontrado.apellidos
+       }
     });
   } catch (error) {
     res.status(500).send({ error: "Error al iniciar sesión" });
