@@ -172,6 +172,16 @@ export const getPrestamosInfo = async (req: Request, res: Response): Promise<Res
   }
 };
 
+//Obtener total carte de una sucursal
+export const getTotalCarteraSucursal = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    const totalCartera = await prestamo.getTotalCarteraSucursal(sucursal_id);
+    return res.status(200).json({ total_cartera: totalCartera });
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al obtener el total de la cartera de la sucursal' });
+  }
+};
 
 
 // Actualizar un préstamo   
@@ -333,6 +343,7 @@ export default {
   getPrestamosByClienteId,
   getPrestamosInfo,
   getPrestamoInfoById,
+  getTotalCarteraSucursal,
   updatePrestamo,
   deletePrestamo,
   getPrestamoAndCobrosInfo,

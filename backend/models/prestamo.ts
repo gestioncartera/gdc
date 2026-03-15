@@ -272,6 +272,28 @@ export const getCobradorByPrestamoId = async (prestamo_id: number): Promise<any>
   return result.rows[0] || null;
 };
 
+//obtener el total de cartera de una sucursal
+export const getTotalCarteraSucursal = async (sucursal_id: number): Promise<number> => {
+  const result = await db.query(
+    `SELECT SUM(prestamos.saldo_pendiente) AS total_cartera
+    FROM prestamos
+    WHERE prestamos.sucursal_id = $1`,
+    [sucursal_id]
+  );
+  return result.rows[0].total_cartera || 0;
+};
+
+//Obtener la cantidad de prestamos en curso de una sucursal
+export const getPrestamosEnCursoSucursal = async (sucursal_id: number): Promise<number> => {
+  const result = await db.query(
+    `SELECT COUNT(*) AS prestamos_en_curso
+    FROM prestamos
+    WHERE prestamos.sucursal_id = $1 AND prestamos.estado_prestamo = 'en curso'`,
+    [sucursal_id]
+  );
+  return result.rows[0].prestamos_en_curso || 0;
+};
+
 //Obtener prestamos con informacion
 export const getPrestamosInfo = async (): Promise<Prestamo[]|any[]> => {
   const result = await db.query
@@ -360,6 +382,8 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   getCobradorByPrestamoId,
   getPrestamosInfo,
   getPrestamoInfoById,
+  getTotalCarteraSucursal,
+  getPrestamosEnCursoSucursal,
   updatePrestamo,
   confirmarPrestamo,
   deletePrestamo,

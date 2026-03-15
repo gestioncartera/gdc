@@ -172,6 +172,42 @@ export const getCobrosPendientesByUsuarioId = async (usuario_id: number): Promis
   return result.rows || null;
 };
 
+//Reporte, Obtener los cobros realizados en una sucursal en un dia
+export const getTotalCobradoHoy = async (sucursal_id: number, fecha: string): Promise<number> => {
+  const result = await db.query
+  (`SELECT coalesce(sum(coalesce(c.monto_cobrado, 0)), 0) as total_cobrado
+    FROM cobros c
+    inner join usuarios u on c.usuario_id = u.usuario_id
+    WHERE u.sucursal_id = $1 and date(c.fecha_cobro) = date($2)`, [sucursal_id, fecha]);
+
+    return result.rows[0].total_cobrado || 0;
+};
+
+//REPORTE, obetener la cantidad de prestamos que aun se han realizado el cobro para una sucursal
+export const getCantCobrosHoy = async (sucursal_id: number, fecha: string): Promise<number> => {
+  const result = await db.query
+  (`SELECT COUNT(DISTINCT c.prestamo_id) as cantidad_prestamos
+    FROM cobros c
+    inner join usuarios u on c.usuario_id = u.usuario_id
+    WHERE u.sucursal_id = $1 and date(c.fecha_cobro) = date($2)`, [sucursal_id, fecha]);
+
+    return result.rows[0].cantidad_prestamos || 0;
+};
+
+//Reporte de cobros por cobrador, obtener el total cobrado por un cobrador en un dia
+/* export const getTotalCobradoByUsuarioId = async (usuario_id: number, fecha: string): Promise<number> => {
+  const result = await db.query
+  (`SELECT coalesce(sum(coalesce(c.monto_cobrado, 0)), 0) as total_cobrado,
+    u.
+    FROM cobros c
+    inner join usuarios u on c.usuario_id = u.usuario_id
+    WHERE c.usuario_id = $1 and date(c.fecha_cobro) = date($2)`, [usuario_id, fecha]);
+
+    return result.rows[0].total_cobrado || 0;
+}; */
+
+
+
 // Actualizar un cobro
 export const updateCobro = async (cobro_id: number, cobro: Cobro): Promise<Cobro | null> => {
   const result = await db.query(
@@ -360,6 +396,8 @@ export default {
   getCobroInfoById,
   getCobrosPendientesByPrestamoId,
   getCobrosPendientesByUsuarioId,
+  getTotalCobradoHoy,
+  getCantCobrosHoy,
   updateMontoCobroConCaja,
   updateCobro,
   deleteCobro,

@@ -182,6 +182,41 @@ export const getPrestamoCobrosHistory = async (req: Request, res: Response): Pro
   }
 };
 
+// Obtener el total cobrado hoy
+export const getTotalCobradoHoy = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    const totalCobradoHoy = await cobro.getTotalCobradoHoy(sucursal_id, new Date().toISOString().split('T')[0]);
+    if (!totalCobradoHoy) {
+      return res.status(404).send({ error: 'No se encontraron cobros para hoy' });
+    }
+    return res.status(200).json({'total_cobro_hoy':totalCobradoHoy});
+  } catch (error) {
+    return res.status(500).send({ error: 'Error al obtener el total cobrado hoy' });
+  }
+};
+
+
+// Obtener la cantidad de cobros realizados hoy
+export const getCantCobrosHoy = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    const cantCobrosHoy = await cobro.getCantCobrosHoy(sucursal_id, new Date().toISOString().split('T')[0]);
+    if (!cantCobrosHoy) {
+      return res.status(404).send({ error: 'No se encontraron cobros para hoy' });
+    }
+    const cantPrestamosEnCurso = await prestamo.getPrestamosEnCursoSucursal(sucursal_id);
+    
+    return res.status(200).json({
+      'cant_cobros_hoy': cantCobrosHoy,
+      'cant_cobros_pendientes': cantPrestamosEnCurso-cantCobrosHoy
+    });
+  } catch (error) {
+  
+    return res.status(500).send({ error: 'Error al obtener la cantidad de cobros realizados hoy' });
+  }
+};
+
 // Actualizar un cobro
 export const updateCobro = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -307,6 +342,8 @@ export default {
   getCobroById,
   getCobrosByRutaId,
   getCobroInfoById,
+  getTotalCobradoHoy,
+  getCantCobrosHoy,
   updateCobro,
   updateMontoCobroConCaja,
   deleteCobro,

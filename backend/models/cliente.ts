@@ -115,7 +115,7 @@ export async function getClientesByUser(id_usuario: number): Promise<Cliente[]|a
 
 export async function getClientesRutaUser(id_usuario: number): Promise<Cliente[]|any[]> {
   const result = await db.query(`SELECT distinct clientes.cliente_id,
-     clientes.Nombres ||' '||  clientes.Apellidos AS nombre,
+     clientes.Nombres ||' '||  clientes.Apellidos AS nombres,
     clientes.direccion AS direccionCliente,
     clientes.telefono AS telefonoCliente
     FROM asignaciones_rutas ar
