@@ -80,7 +80,8 @@ order BY r.ruta_id ASC
 export async function getRutaById(id: number): Promise<Ruta | null> {
   const result = await db.query(
     `SELECT r.*, 
-            COALESCE(u.nombres || ' ' || u.apellidos, 'No asignado') AS cobrador
+            COALESCE(u.nombres || ' ' || u.apellidos, 'No asignado') AS cobrador,
+            u.usuario_id 
      FROM rutas r
      LEFT JOIN asignaciones_rutas ar ON r.ruta_id = ar.ruta_id AND ar.estado = 'activo'
      LEFT JOIN usuarios u ON ar.usuario_id = u.usuario_id
