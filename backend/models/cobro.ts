@@ -195,16 +195,16 @@ export const getCantCobrosHoy = async (sucursal_id: number, fecha: string): Prom
 };
 
 //Reporte de cobros por cobrador, obtener el total cobrado por un cobrador en un dia
-/* export const getTotalCobradoByUsuarioId = async (usuario_id: number, fecha: string): Promise<number> => {
+ export const getTotalCobradoByUsuarioId = async (usuario_id: number, fecha: string): Promise<number> => {
   const result = await db.query
   (`SELECT coalesce(sum(coalesce(c.monto_cobrado, 0)), 0) as total_cobrado,
-    u.
+    u.usuario_id
     FROM cobros c
     inner join usuarios u on c.usuario_id = u.usuario_id
     WHERE c.usuario_id = $1 and date(c.fecha_cobro) = date($2)`, [usuario_id, fecha]);
 
     return result.rows[0].total_cobrado || 0;
-}; */
+}; 
 
 
 

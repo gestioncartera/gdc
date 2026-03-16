@@ -109,7 +109,7 @@ export async function getClientesByUser(id_usuario: number): Promise<Cliente[]|a
     inner join prestamos on clientes.cliente_id = prestamos.cliente_id and prestamos.estado_prestamo='en curso'
     WHERE ar.usuario_id = $1 and ar.estado = 'activo' `,
     [id_usuario]);
- console.log(result.rows);
+ 
   return result.rows || null;
 }
 
@@ -123,7 +123,7 @@ export async function getClientesRutaUser(id_usuario: number): Promise<Cliente[]
     inner JOIN clientes  ON rutas.ruta_id = clientes.id_ruta
     WHERE ar.usuario_id = $1 and ar.estado = 'activo' `,
     [id_usuario]);
- console.log(result.rows);
+ 
   return result.rows || null;
 }
 
