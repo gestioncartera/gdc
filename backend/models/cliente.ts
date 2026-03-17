@@ -38,7 +38,11 @@ export async function createCliente(cliente: Cliente): Promise<Cliente|null> {
 
 // Obtener todos los clientes por sucursal ID
 export async function getClientes(idSucursal: number): Promise<Cliente[]> {
-  const result = await db.query('SELECT * FROM clientes WHERE sucursal_id = $1 order by cliente_id asc', 
+  const result = await db.query(`SELECT clientes.* ,
+      rutas.nombre_ruta AS nombre_ruta
+    FROM clientes 
+    inner join rutas on clientes.id_ruta = rutas.ruta_id
+    WHERE clientes.sucursal_id = $1 order by cliente_id asc`,  
     [idSucursal]);
   return result.rows;
 }
@@ -71,10 +75,12 @@ export async function getClientesConPrestamosActivos(sucursal_id: number): Promi
       clientes.estado AS estado,
       clientes.id_ruta AS id_ruta,
       clientes.sucursal_id AS sucursal_id,
-      clientes.orden_ruta AS orden_ruta
+      clientes.orden_ruta AS orden_ruta,
+      rutas.nombre_ruta AS nombre_ruta
     FROM clientes
     inner join prestamos on clientes.cliente_id = prestamos.cliente_id 
     and prestamos.estado_prestamo='en curso'
+    inner join rutas on clientes.id_ruta = rutas.ruta_id
     WHERE clientes.sucursal_id = $1`,
     [sucursal_id]);
   return result.rows;
