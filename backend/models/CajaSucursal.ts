@@ -32,7 +32,14 @@ export const getCajaSucursalBySucursalId = async (sucursal_id: number): Promise<
   return result.rows[0] || null;
 };
 
+export const getCajaSucursalById = async (caja_sucursal_id: number): Promise<CajaSucursal | null> => {
+  const result = await db.query(`SELECT * FROM cajas_sucursales WHERE caja_sucursal_id = $1`,
+    [caja_sucursal_id]);
+  return result.rows[0] || null;
+};
+
 export default {
   createCajaSucursal,
   getCajaSucursalBySucursalId,
+  getCajaSucursalById
 };

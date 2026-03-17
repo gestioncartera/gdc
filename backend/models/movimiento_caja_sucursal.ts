@@ -19,6 +19,9 @@ export const createMovimientoCajaSucursal = async (movimiento: MovimientoCajaSuc
     try {
         await client.query('BEGIN');
 
+        //validar saldo en caja para movimientos de egreso 
+        //const cajaSucursal
+
         // 1. Insertar Movimiento
         const movtocaja= await client.query(`INSERT INTO movimientos_caja_sucursal (
                 caja_sucursal_id,
@@ -63,6 +66,14 @@ export const createMovimientoCajaSucursal = async (movimiento: MovimientoCajaSuc
     }
 };
 
+export const getMovimientoById = async (movimiento_id: number): Promise<MovimientoCajaSucursal | null> => {
+    const result = await db.query(
+        `SELECT * FROM movimientos_caja_sucursal
+        WHERE movimiento_id = $1`,
+        [movimiento_id]
+    );
+    return result.rows[0] || null;
+};
 
 
 
@@ -85,17 +96,20 @@ export const anularMovimientoCajaSucursal = async (movimiento_id: number): Promi
     const result = await db.query(
         `UPDATE movimientos_caja_sucursal 
         SET estado_movto = 'anulado'
-        WHERE movimiento_id = $1 and descripcion='Apertura de caja diaria' RETURNING *`,
+        WHERE movimiento_id = $1  RETURNING *`,
         [movimiento_id]
     );
 
+    
+    
     // 2. Actualizar Saldo Caja
         const updatecaja = await client.query(`UPDATE cajas_sucursales 
-            SET saldo_actual = saldo_actual - $2, 
+            SET saldo_actual = saldo_actual + $3, 
             fecha_ultima_actualizacion = NOW() 
             WHERE caja_sucursal_id = $1 RETURNING *`,
         [result.rows[0].caja_sucursal_id,
             result.rows[0].monto,
+            result.rows[0].tipo_movimiento === 'ingreso' ? -result.rows[0].monto : result.rows[0].monto,
         ]);
    
    await client.query('COMMIT');
@@ -113,5 +127,6 @@ export const anularMovimientoCajaSucursal = async (movimiento_id: number): Promi
 export default {
     createMovimientoCajaSucursal,
     getMovimientosByCajaSucursalId,
-    anularMovimientoCajaSucursal
+    anularMovimientoCajaSucursal,
+    getMovimientoById
 };
