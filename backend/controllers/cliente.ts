@@ -1,6 +1,7 @@
 import  cliente  from "../models/cliente";
 import ruta from "../models/ruta";
 import usuario from "../models/usuario";
+import asignacionRuta from "../models/AsignacionRuta";
 import { Request, Response } from "express";
 
 
@@ -95,13 +96,18 @@ const getClientesByRutaPrestamo = async (req: Request, res: Response) => {
     try { 
 
 
-        const existeRuta = await ruta.getRutaById(parseInt(req.params.id_ruta));
-        if (!existeRuta) {
-            return res.status(400).send({ error: 'La ruta especificada no existe' });
+        const id_usuario = parseInt(req.params.id_usuario);
+        const existeUsuario = await usuario.getUsuarioById(id_usuario);
+        if (!existeUsuario) {
+            return res.status(400).send({ error: 'El cobrador especificado no existe' });
         }
 
-        const id_ruta = parseInt(req.params.id_ruta);
-        const clientesEncontrado = await cliente.getClientesByRutaPrestamo(id_ruta);
+        const rutaEncontrada = await asignacionRuta.getRutaAsignadaUsuario(id_usuario);
+        if (!rutaEncontrada) {
+            return res.status(404).send({ message: 'El cobrador no tiene una ruta asignada' });
+        }
+
+        const clientesEncontrado = await cliente.getClientesByRutaPrestamo(rutaEncontrada.ruta_id);
           return clientesEncontrado.length===0
           ? res.status(404).send({ message: 'Cliente no encontrado para la ruta' }) 
           : res.status(200).json(clientesEncontrado);
