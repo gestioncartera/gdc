@@ -106,7 +106,7 @@ export const anularMovimientoCajaSucursal = async (movimiento_id: number): Promi
         const updatecaja = await client.query(`UPDATE cajas_sucursales 
             SET saldo_actual = saldo_actual + $2, 
             fecha_ultima_actualizacion = NOW() 
-            WHERE caja_sucursal_id = $1 RETURNING *`,
+            WHERE caja_sucursal_id = $1  RETURNING *`,
         [result.rows[0].caja_sucursal_id,
             result.rows[0].tipo_movimiento === 'ingreso' ? -result.rows[0].monto : result.rows[0].monto,
         ]);
@@ -114,6 +114,8 @@ export const anularMovimientoCajaSucursal = async (movimiento_id: number): Promi
         if (!updatecaja.rows[0]) {
             throw new Error('No se pudo actualizar el saldo de la caja');
         }
+
+      
    
    await client.query('COMMIT');
          return result.rows[0] || null;
@@ -127,9 +129,21 @@ export const anularMovimientoCajaSucursal = async (movimiento_id: number): Promi
 
 };
 
+export  const hayEgresosNew = async (movimiento: MovimientoCajaSucursal): Promise<boolean> => {
+    const result = await db.query(
+        `SELECT COUNT(*) FROM movimientos_caja_sucursal
+        WHERE fecha_movimiento > $1 
+        AND     caja_sucursal_id = $2
+        and tipo_movimiento = 'egreso'`,
+        [movimiento.fecha_movimiento, movimiento.caja_sucursal_id]
+    );
+    return result.rows[0].count > 0;
+};
+
 export default {
     createMovimientoCajaSucursal,
     getMovimientosByCajaSucursalId,
     anularMovimientoCajaSucursal,
-    getMovimientoById
+    getMovimientoById,
+    hayEgresosNew
 };

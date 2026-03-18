@@ -62,9 +62,17 @@ const anularMovimientoCajaSucursal = async (req: Request, res: Response) => {
 
         const usuarioResponsable= await usuario.esAdmin(movimiento.usuario_responsable_id);
         if (!usuarioResponsable) {
-            return res.status(403).send({ error: 'Ete tipo de movimiento no se puede anular' });
+            return res.status(403).send({ error: 'Este tipo de movimiento no se puede anular' });
         }
 
+        if (movimiento.tipo_movimiento.toUpperCase() === 'ingreso') {
+             const hayEgresos = await movtoCajaSucursal.hayEgresosNew(movimiento);
+                if (hayEgresos) {
+                    return res.status(403).send({ error: 'No se puede anular un movimiento de ingreso si hay egresos posteriores' });
+                }
+           
+        }
+       
         const movimientoAnulado = await movtoCajaSucursal.anularMovimientoCajaSucursal(movimiento_id);
 
         if (!movimientoAnulado) {
