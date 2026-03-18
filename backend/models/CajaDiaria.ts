@@ -183,13 +183,79 @@ export const validarFondosCajaPrincipal = async (sucursal_id: number, monto_requ
 
 //actualizar la base de la caja diaria 
 export const updateBase = async (caja_diaria_id: number, nuevoMontoBase: number): Promise<CajaDiaria | null> => {
+  const client = await db.connect();
+  try {    await client.query('BEGIN');
+  
   const result = await db.query(
     `UPDATE cajas_diarias SET monto_base_inicial = monto_base_inicial + $1 ,
       monto_final_esperado = monto_final_esperado + $1
     WHERE caja_diaria_id = $2 RETURNING *`,
     [nuevoMontoBase, caja_diaria_id]
   );
-  return result.rows[0] || null;
+
+  if (result.rowCount === 0) {
+    throw new Error('Caja diaria no encontrada');
+  }
+
+
+
+  // Obtener la sucursal_id de la caja diaria
+   const sucursal_id = await client.query(
+    `SELECT u.sucursal_id, u.usuario_id
+    FROM cajas_diarias cd
+    INNER JOIN usuarios u ON cd.usuario_id = u.usuario_id
+    WHERE cd.caja_diaria_id = $1`,
+    [caja_diaria_id]
+  );
+
+  if (sucursal_id.rowCount === 0) {
+    throw new Error('Sucursal no encontrada');
+  }
+
+  // Actualizar el saldo de la caja principal
+  const cajaUpdate = await client.query(
+    `UPDATE cajas_sucursales
+    SET saldo_actual = saldo_actual - $1
+    WHERE sucursal_id = $2 RETURNING *`,
+    [nuevoMontoBase, sucursal_id.rows[0].sucursal_id]
+  );
+
+     //  Registrar también el egreso en 'movimientos_caja_sucursal' para auditoría
+   const movtoCaja = await client.query(
+      `INSERT INTO movimientos_caja_sucursal (
+        caja_sucursal_id,
+        usuario_responsable_id,
+        tipo_movimiento,
+        monto,
+        descripcion,
+        fecha_movimiento,
+        estado_movto
+      ) VALUES (
+        $1,
+        $2,
+        'egreso',
+        $3,
+        'Aumento de caja diaria',
+        NOW(),
+        'confirmado'
+      ) RETURNING *`,
+      [cajaUpdate.rows[0].sucursal_id, sucursal_id.rows[0].usuario_id, nuevoMontoBase]
+    );
+
+    if (movtoCaja.rowCount === 0) {
+      throw new Error('No se pudo registrar el movimiento de caja');
+    }
+ 
+
+   await client.query('COMMIT');
+     return result.rows[0] || null;
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 //cerrar caja diaria y actualizar el monto final real, diferencia y estado
