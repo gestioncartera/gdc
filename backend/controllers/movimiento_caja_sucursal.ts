@@ -65,7 +65,9 @@ const anularMovimientoCajaSucursal = async (req: Request, res: Response) => {
             return res.status(403).send({ error: 'Este tipo de movimiento no se puede anular' });
         }
 
-        if (movimiento.tipo_movimiento.toUpperCase() === 'ingreso') {
+        if (movimiento.tipo_movimiento.toLowerCase() === 'ingreso') {
+        
+            
              const hayEgresos = await movtoCajaSucursal.hayEgresosNew(movimiento);
                 if (hayEgresos) {
                     return res.status(403).send({ error: 'No se puede anular un movimiento de ingreso si hay egresos posteriores' });

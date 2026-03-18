@@ -137,6 +137,7 @@ export  const hayEgresosNew = async (movimiento: MovimientoCajaSucursal): Promis
         and tipo_movimiento = 'egreso'`,
         [movimiento.fecha_movimiento, movimiento.caja_sucursal_id]
     );
+   
     return result.rows[0].count > 0;
 };
 
