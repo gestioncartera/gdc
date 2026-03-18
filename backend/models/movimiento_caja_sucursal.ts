@@ -100,17 +100,20 @@ export const anularMovimientoCajaSucursal = async (movimiento_id: number): Promi
         [movimiento_id]
     );
 
-    
+   
     
     // 2. Actualizar Saldo Caja
         const updatecaja = await client.query(`UPDATE cajas_sucursales 
-            SET saldo_actual = saldo_actual + $3, 
+            SET saldo_actual = saldo_actual + $2, 
             fecha_ultima_actualizacion = NOW() 
             WHERE caja_sucursal_id = $1 RETURNING *`,
         [result.rows[0].caja_sucursal_id,
-            result.rows[0].monto,
             result.rows[0].tipo_movimiento === 'ingreso' ? -result.rows[0].monto : result.rows[0].monto,
         ]);
+
+        if (!updatecaja.rows[0]) {
+            throw new Error('No se pudo actualizar el saldo de la caja');
+        }
    
    await client.query('COMMIT');
          return result.rows[0] || null;

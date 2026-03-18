@@ -31,7 +31,7 @@ const createMovimientoCajaSucursal = async (req: Request, res: Response) => {
         const nuevoMovimiento = await movtoCajaSucursal.createMovimientoCajaSucursal(req.body);
         return res.status(201).json(nuevoMovimiento);
     } catch (error) {
-        console.error(error);
+       
         return res.status(500).send({ error: 'Error interno del servidor' });
     }
 };
@@ -73,7 +73,7 @@ const anularMovimientoCajaSucursal = async (req: Request, res: Response) => {
 
         return res.status(200).json(movimientoAnulado);
     } catch (error) {
-        console.error(error);
+        
         return res.status(500).send({ error: 'Error interno del servidor' });
     }
 };
