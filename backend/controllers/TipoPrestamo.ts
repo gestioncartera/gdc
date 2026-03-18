@@ -4,8 +4,8 @@ import { Request, Response } from "express";
 // Crear tipo de préstamo
 export const createTipoPrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    if (req.body.cantidad_cuotas === undefined || req.body.porcentaje === undefined) {
-      return res.status(400).send({ error: 'La cantidad de cuotas y el porcentaje son obligatorios' });
+    if (req.body.cantidad_cuotas === undefined || req.body.porcentaje === undefined || req.body.nombre === undefined) {
+      return res.status(400).send({ error: 'La cantidad de cuotas, el porcentaje y el nombre son obligatorios' });
     }
    
     const tipoPrestamo = req.body;

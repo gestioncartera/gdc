@@ -149,6 +149,7 @@ const getClientesRutaUser = async (req: Request, res: Response) => {
             return res.status(400).send({ error: 'El cobrador especificado no existe' });
         }
 
+
         const clientesEncontrado = await cliente.getClientesRutaUser(id_usuario);
           return clientesEncontrado.length===0
             ? res.status(404).send({ message: 'Cobrador no tiene asignada ruta o la Ruta no tiene clientes' })

@@ -129,6 +129,7 @@ export async function getClientesRutaUser(id_usuario: number): Promise<Cliente[]
     inner JOIN clientes  ON rutas.ruta_id = clientes.id_ruta
     WHERE ar.usuario_id = $1 and ar.estado = 'activo' `,
     [id_usuario]);
+ console.log(result.rows);
  
   return result.rows || null;
 }
