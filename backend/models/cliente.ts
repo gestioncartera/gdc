@@ -96,7 +96,9 @@ export async function getClientesByRutaPrestamo(id_ruta: number): Promise<Client
   const result = await db.query(`SELECT c.* 
     FROM clientes c
     inner join prestamos on c.cliente_id = prestamos.cliente_id and prestamos.estado_prestamo='en curso'
-    WHERE c.id_ruta = $1 order by c.orden_ruta asc`,
+    WHERE c.id_ruta = $1 
+    group by c.cliente_id, c.nombres, c.apellidos, c.numero_identificacion, c.telefono, c.direccion, c.fecha_registro, c.estado, c.id_ruta, c.sucursal_id, c.orden_ruta
+    order by c.orden_ruta asc`,
     [id_ruta]);
   return result.rows;
 }

@@ -19,6 +19,10 @@ export const createCobro = async (req: Request, res: Response): Promise<Response
       return res.status(404).send({ error: 'Préstamo no encontrado' });
     }
 
+    if(prestamoExistente.estado_prestamo !== 'en curso') {
+      return res.status(400).send({ error: 'No se pueden agregar cobros, prestamo no vigente' });
+    }
+
     //validar que el cobrador exista
     const cobradorExistente = await usuario.getUsuarioById(req.body.usuario_id);
     if (!cobradorExistente) {
