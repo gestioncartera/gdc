@@ -251,7 +251,7 @@ export const getPrestamosByClienteId = async (cliente_id: number): Promise<Prest
     prestamos.fecha_fin_prestamo
     FROM  clientes
     inner join prestamos on clientes.cliente_id=prestamos.cliente_id
-    WHERE clientes.cliente_id = $1`, 
+    WHERE clientes.cliente_id = $1 and prestamos.estado_prestamo='en curso'`, 
     [cliente_id]
   );
   return result.rows;
