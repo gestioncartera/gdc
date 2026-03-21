@@ -39,11 +39,20 @@ export const createPrestamo = async (req: Request, res: Response): Promise<Respo
     // Fusionar cálculos en el body
     req.body = { ...req.body, ...calculos };
 
+    let newPrestamo:any = null;
     // 6. Insertar
-    const newPrestamo = await prestamo.createPrestamo(req.body);
-    return (!newPrestamo) 
-    ? res.status(400).send({ error: 'No se pudo crear el préstamo' }) 
-    : res.status(201).send({message:"Préstamo creado exitosamente"});
+    if(admin === true){
+       newPrestamo = await prestamo.createPrestamoAdmin(req.body);
+    }
+    else{
+       newPrestamo = await prestamo.createPrestamo(req.body);
+    }
+    //const newPrestamo = await prestamo.createPrestamo(req.body);
+    if (!newPrestamo) {
+      return res.status(400).send({ error: 'No se pudo crear el préstamo' });
+    }
+   
+    return res.status(201).send({message:"Préstamo creado exitosamente"});
 
   } catch (error: any) {
     //console.error(error);

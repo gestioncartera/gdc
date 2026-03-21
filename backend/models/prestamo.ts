@@ -120,6 +120,110 @@ export const createPrestamo = async (prestamo: Prestamo): Promise<Prestamo | nul
   }
 };
 
+//crear prestamos para usuario administrador sin validar caja diaria ni registrar egreso
+export const createPrestamoAdmin = async (prestamo: Prestamo): Promise<Prestamo | null> => {
+const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+
+    const cajaSurcursal = await client.query(
+      `SELECT * 
+       FROM cajas_sucursales
+        WHERE sucursal_id = $1
+        FOR UPDATE`, // Bloqueamos la fila para evitar concurrencia
+      [prestamo.sucursal_id]
+    );
+
+    if (cajaSurcursal.rows.length === 0) {
+      throw new Error('No se encontró una caja  para la sucursal.');
+    }
+
+    if(cajaSurcursal.rows[0].saldo_actual < prestamo.monto_prestamo){
+      throw new Error('Saldo insuficiente en caja para realizar este préstamo.');
+    }
+
+    const UpdateCaja = await client.query(
+      `UPDATE cajas_sucursales
+       SET saldo_actual = saldo_actual - $1
+       WHERE caja_sucursal_id = $2`,
+      [prestamo.monto_prestamo, cajaSurcursal.rows[0].caja_sucursal_id]
+    );
+
+    if(UpdateCaja.rowCount === 0){
+      throw new Error('Error al actualizar saldo en caja sucursal.');
+    }
+
+  const movtoCaja = await client.query(
+    `INSERT INTO movimientos_caja_sucursal (
+      sucursal_id,
+      tipo_movimiento,
+      monto,
+      descripcion,
+      usuario_responsable_id,
+      estado_movto,
+      fecha_movimiento
+      ) VALUES (
+          ($1),
+          ($2),
+          ($3),
+          ($4),
+          ($5),
+          ($6),
+          ($7)
+      ) RETURNING *`,
+      [prestamo.sucursal_id,
+        'egreso',
+        prestamo.monto_prestamo,
+        'Desembolso Préstamo por administrador',
+         prestamo.id_usuario_creacion,
+         'confirmado',
+          new Date()
+        ]
+    );
+
+    if(movtoCaja.rows.length === 0){
+      throw new Error('Error al registrar movimiento en caja sucursal.');
+    }
+
+
+  const result = await db.query(
+    `INSERT INTO prestamos (
+        cliente_id, sucursal_id, monto_prestamo, fecha_desembolso,
+        estado_prestamo, saldo_pendiente, created_at, tipo_prestamo_id,
+        valor_intereses, valor_cuota, fecha_fin_prestamo, id_usuario_creacion
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *`,
+    [
+      prestamo.cliente_id,
+      prestamo.sucursal_id,
+      prestamo.monto_prestamo,
+      prestamo.fecha_desembolso || new Date(),
+      prestamo.estado_prestamo || 'en curso',
+      prestamo.saldo_pendiente || prestamo.monto_prestamo,
+      prestamo.created_at || new Date(),
+      prestamo.tipo_prestamo_id,
+      prestamo.valor_intereses,
+      prestamo.valor_cuota,
+      prestamo.fecha_fin_prestamo,
+      prestamo.id_usuario_creacion
+    ]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error('Error al crear el préstamo.');
+  }
+
+   await client.query('COMMIT');
+  return result.rows[0] || null;
+
+   } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 //confirmar prestamo
 export const confirmarPrestamo = async (prestamo_id: number): Promise<Prestamo | null> => {
   const result = await db.query(
@@ -388,7 +492,8 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   confirmarPrestamo,
   deletePrestamo,
   rechazarPrestamo,
-  PrestamosPendientes
+  PrestamosPendientes,
+  createPrestamoAdmin
 };
 
 
