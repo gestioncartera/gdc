@@ -109,6 +109,15 @@ export async function updateRuta(id: number, ruta: Ruta): Promise<Ruta | null> {
   );
   return result.rows[0] || null;
 }
+//desactivar ruta
+export async function desactivarRuta(id: number): Promise<Ruta | null> {
+  const result = await db.query(
+    `UPDATE rutas SET estado = 'INACTIVO'
+     WHERE ruta_id = $1 RETURNING *`,
+    [id]
+  );
+  return result.rows[0] || null;
+}
 
 // Eliminar una ruta
 export async function deleteRuta(id: number): Promise<Ruta | null> {
@@ -125,5 +134,6 @@ export default {
   getRutasCobros,
   getRutaById,
   updateRuta,
-  deleteRuta
+  deleteRuta,
+  desactivarRuta
 };

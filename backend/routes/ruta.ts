@@ -9,5 +9,6 @@ router.get('/getRutas/:idSucursal', auth, ruta.getRutas);
 router.get('/getRutaById/:id', auth, ruta.getRutaById);
 router.get('/getRutasCobros/:idSucursal', auth, ruta.getRutasCobros);
 router.put('/updateRuta/:id', auth, ruta.updateRuta);
+router.patch('/desactivarRuta/:id', auth, ruta.desactivarRuta);
 router.delete('/deleteRuta/:id', auth, ruta.deleteRuta);
 export default router;
