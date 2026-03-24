@@ -265,12 +265,12 @@ export const rechazarPrestamo = async (prestamo_id: number): Promise<Prestamo | 
     }
 
     const cajaDiaria = resCaja.rows[0];
-
+    
     // 3. cambiar estado  del egreso 
     const egreso=await client.query(
       `UPDATE egresos_operacion
        SET estado_egreso = 'rechazado'
-       WHERE usuario_id = $1 AND concepto = 'Desembolso Préstamo #' || $2`,
+       WHERE usuario_id = $1 AND concepto = 'Desembolso Préstamo #' || $2 returning *`,
       [prestamo.id_usuario_creacion, prestamo_id]
     );
 
