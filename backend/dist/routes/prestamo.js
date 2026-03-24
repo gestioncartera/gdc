@@ -1,0 +1,23 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const prestamo_1 = __importDefault(require("../controllers/prestamo"));
+const express_1 = __importDefault(require("express"));
+const auth_1 = __importDefault(require("../middlewares/auth"));
+const router = express_1.default.Router();
+router.post("/createPrestamo", auth_1.default, prestamo_1.default.createPrestamo);
+router.get("/getAllPrestamos", auth_1.default, prestamo_1.default.getAllPrestamos);
+router.get("/getPrestamoById/:id", auth_1.default, prestamo_1.default.getPrestamoById);
+router.get("/getPrestamosByCliente/:cliente_id", auth_1.default, prestamo_1.default.getPrestamosByClienteId);
+router.get("/getPrestamosInfo", auth_1.default, prestamo_1.default.getPrestamosInfo);
+router.get("/getPrestamoInfoById/:prestamo_id", auth_1.default, prestamo_1.default.getPrestamoInfoById);
+router.get("/prestamoCobros/:prestamo_id", auth_1.default, prestamo_1.default.getPrestamoAndCobrosInfo);
+router.get("/prestamosPendientes/:sucursal_id", auth_1.default, prestamo_1.default.PrestamosPendientes);
+router.get("/totalCarteraSucursal/:sucursal_id", auth_1.default, prestamo_1.default.getTotalCarteraSucursal);
+router.patch("/updatePrestamo/:id", auth_1.default, prestamo_1.default.updatePrestamo);
+router.delete("/deletePrestamo/:id", auth_1.default, prestamo_1.default.deletePrestamo);
+router.patch("/confirmarPrestamo/:prestamo_id", auth_1.default, prestamo_1.default.confirmarPrestamo);
+router.patch("/rechazarPrestamo/:prestamo_id", auth_1.default, prestamo_1.default.rechazarPrestamo);
+exports.default = router;

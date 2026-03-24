@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const cliente_1 = __importDefault(require("../controllers/cliente"));
+const express_1 = __importDefault(require("express"));
+const auth_1 = __importDefault(require("../middlewares/auth"));
+const router = express_1.default.Router();
+router.post('/createCliente', auth_1.default, cliente_1.default.createCliente);
+router.get('/getClientes/:sucursal_id', auth_1.default, cliente_1.default.getClientes);
+router.get('/getClienteById/:id', auth_1.default, cliente_1.default.getClienteById);
+router.get('/getClientesBySucursal/:sucursal_id', auth_1.default, cliente_1.default.getClientesBySucursal);
+router.get('/getClientesByRuta/:id_ruta', auth_1.default, cliente_1.default.getClientesByRuta);
+router.get('/getClientesByRutaPrestamo/:id_usuario', auth_1.default, cliente_1.default.getClientesByRutaPrestamo);
+router.get('/getClientesConPrestamosActivos/:sucursal_id', auth_1.default, cliente_1.default.getClientesConPrestamosActivos);
+router.put('/updateCliente', auth_1.default, cliente_1.default.updateCliente);
+router.get('/getClientesByUser/:id_usuario', auth_1.default, cliente_1.default.getClientesByUser);
+router.get('/getClientesRutaUser/:id_usuario', auth_1.default, cliente_1.default.getClientesRutaUser);
+router.patch('/actualizarOrdenClientes/:id_ruta', auth_1.default, cliente_1.default.actualizarOrdenClientes);
+router.delete('/deleteCliente/:id', auth_1.default, cliente_1.default.deleteCliente);
+exports.default = router;
