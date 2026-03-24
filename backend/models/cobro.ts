@@ -386,6 +386,32 @@ export async function validarMultiplesCobros(cobroIds: number[]) {
   }
 }
 
+const resumenCobrosCoradorRuta = async (sucursal_id: number, fecha: string): Promise<any> => {
+  const result = await db.query(
+    `  SELECT  u.usuario_id,
+    u.nombres || ' ' || u.apellidos AS nombre_cobrador,
+    r.nombre_ruta AS nombre_ruta,
+    COUNT(c.cobro_id) AS total_cobros,
+    SUM(c.monto_cobrado) AS total_cobrado,
+        p.cant as Total_clientes
+    FROM cobros c
+    INNER JOIN usuarios u ON c.usuario_id = u.usuario_id
+    INNER JOIN asignaciones_rutas ar ON u.usuario_id = ar.usuario_id AND ar.estado = 'activo'
+    INNER JOIN rutas r ON ar.ruta_id = r.ruta_id
+    inner join
+    (SELECT count (prestamo_id) as cant, r.ruta_id as ruta_id from prestamos p
+    inner join clientes cl on cl.cliente_id = p.cliente_id
+    inner join rutas r on r.ruta_id = cl.id_ruta
+     where p.estado_prestamo = 'en curso' and p.sucursal_id = $1
+     GROUP BY r.ruta_id) as
+     p on r.ruta_id = p.ruta_id
+    WHERE u.sucursal_id = $1 AND DATE(c.fecha_cobro) = DATE($2)
+    GROUP BY u.usuario_id, r.ruta_id, p.cant`,
+    [sucursal_id, fecha]
+  );
+  return result.rows;
+};
+
 export default {
   createCobro,
   getAllCobros,
@@ -402,5 +428,6 @@ export default {
   updateCobro,
   deleteCobro,
   validarCobro,
-  validarMultiplesCobros
+  validarMultiplesCobros,
+  resumenCobrosCoradorRuta
 };

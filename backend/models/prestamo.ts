@@ -267,13 +267,17 @@ export const rechazarPrestamo = async (prestamo_id: number): Promise<Prestamo | 
     const cajaDiaria = resCaja.rows[0];
 
     // 3. cambiar estado  del egreso 
-    await client.query(
+    const egreso=await client.query(
       `UPDATE egresos_operacion
        SET estado_egreso = 'rechazado'
        WHERE usuario_id = $1 AND concepto = 'Desembolso Préstamo #' || $2`,
       [prestamo.id_usuario_creacion, prestamo_id]
     );
-        
+
+    if(egreso.rows.length === 0){
+      throw new Error('Error al actualizar el estado del egreso.');
+    }
+
     // 4. Actualizar el saldo de la caja diaria
     await client.query(
       `UPDATE cajas_diarias

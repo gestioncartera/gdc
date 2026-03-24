@@ -3,6 +3,7 @@ import prestamo from "../models/prestamo";
 import usuario from "../models/usuario";
 import ruta from "../models/ruta";
 import EgresoOperacion from "../models/EgresoOperacion";
+import sucursal from "../models/sucursal";
 import { Request, Response } from "express";
 import CajaDiaria from "../models/CajaDiaria";
 import { now } from "moment";
@@ -298,7 +299,26 @@ export const validarMultiplesCobros = async (req: Request, res: Response): Promi
 
   } catch (error) {
     
-    return res.status(500).json({ error: 'Error interno al procesar los cobros' });
+    return res.status(500).send({ error: 'Error interno al procesar los cobros' });
+  }
+};
+
+const resumenCobrosCoradorRuta = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const  sucursal_id  = parseInt(req.params.sucursal_id);
+        
+    const existeSucursal = await sucursal.getSucursalById(sucursal_id);
+    if (!existeSucursal || existeSucursal === null) {
+      return res.status(404).send({ error: 'No se encontraron rutas para la sucursal especificada' });
+    }
+
+    const resultado = await cobro.resumenCobrosCoradorRuta(sucursal_id,new Date().toISOString().split('T')[0]);
+if (!resultado || resultado.length === 0) {
+      return res.status(404).send({ error: 'No se encontraron cobros para la sucursal especificada' });
+    }
+    return res.status(200).json(resultado);
+  } catch (error) {
+    return res.status(500).send({ error: 'Error al obtener el resumen de cobros por corador y ruta' });
   }
 };
 
@@ -352,5 +372,6 @@ export default {
   updateMontoCobroConCaja,
   deleteCobro,
   validarMultiplesCobros,
-  getPrestamoCobrosHistory
+  getPrestamoCobrosHistory,
+  resumenCobrosCoradorRuta
 };
