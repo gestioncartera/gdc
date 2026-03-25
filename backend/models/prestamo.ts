@@ -480,6 +480,14 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   }
 };  
 
+//buscar prestamo por id prestamo
+export const buscarPrestamoById = async (prestamo_id: number): Promise<Prestamo | null> => {
+  const result = await db.query(`SELECT * FROM prestamos 
+    WHERE prestamo_id = $1 and estado_prestamo = 'en curso'`, 
+    [prestamo_id]);
+  return result.rows[0] || null;
+};
+
 
 
  export default{
@@ -497,7 +505,8 @@ export const deletePrestamo = async (prestamo_id: number): Promise<Prestamo | nu
   deletePrestamo,
   rechazarPrestamo,
   PrestamosPendientes,
-  createPrestamoAdmin
+  createPrestamoAdmin,
+  buscarPrestamoById
 };
 
 

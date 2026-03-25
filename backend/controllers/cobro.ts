@@ -15,10 +15,11 @@ export const createCobro = async (req: Request, res: Response): Promise<Response
     
 
     //validar si el prestamo existe
-    const prestamoExistente = await prestamo.getPrestamoById(req.body.prestamo_id);
-    if (!prestamoExistente) {
+    const prestamoExistente = await prestamo.buscarPrestamoById(req.body.prestamo_id);
+    if (!prestamoExistente || prestamoExistente === null) {
       return res.status(404).send({ error: 'Préstamo no encontrado' });
     }
+console.log(prestamoExistente);
 
     if(prestamoExistente.estado_prestamo !== 'en curso') {
       return res.status(400).send({ error: 'No se pueden agregar cobros, prestamo no vigente' });
@@ -44,8 +45,11 @@ export const createCobro = async (req: Request, res: Response): Promise<Response
   return res.status(400).json({ error: 'El usuario no es el cobrador asignado para este préstamo' });
 }
 
+if(!prestamoExistente.saldo_pendiente || prestamoExistente.saldo_pendiente <= 0) {
+  return res.status(400).json({ error: 'El préstamo ya ha sido pagado en su totalidad' });
+}
     //validar que el monto del cobro no sea mayor al monto del prestamo
-    if (req.body.monto_cobrado > prestamoExistente.saldo_pendiente) {
+    if (req.body.monto_cobrado > prestamoExistente.saldo_pendiente ) {
       return res.status(400).send({ error: 'El monto del cobro no puede ser mayor al saldo pendiente del préstamo' });
     }
 
