@@ -250,7 +250,7 @@ const rechazarPrestamo = async (req, res) => {
         return res.status(200).json(updatedPrestamo);
     }
     catch (error) {
-        // console.error(error);
+        //console.error(error);
         return res.status(500).send({ error: 'Error al actualizar el préstamo' });
     }
 };

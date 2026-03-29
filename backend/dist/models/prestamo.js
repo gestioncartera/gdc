@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePrestamo = exports.updatePrestamo = exports.getPrestamosInfo = exports.getPrestamosEnCursoSucursal = exports.getTotalCarteraSucursal = exports.getCobradorByPrestamoId = exports.getPrestamosByClienteId = exports.getPrestamoInfoById = exports.getPrestamoById = exports.PrestamosPendientes = exports.getAllPrestamos = exports.rechazarPrestamo = exports.confirmarPrestamo = exports.createPrestamoAdmin = exports.createPrestamo = void 0;
+exports.buscarPrestamoById = exports.deletePrestamo = exports.updatePrestamo = exports.getPrestamosInfo = exports.getPrestamosEnCursoSucursal = exports.getTotalCarteraSucursal = exports.getCobradorByPrestamoId = exports.getPrestamosByClienteId = exports.getPrestamoInfoById = exports.getPrestamoById = exports.PrestamosPendientes = exports.getAllPrestamos = exports.rechazarPrestamo = exports.confirmarPrestamo = exports.createPrestamoAdmin = exports.createPrestamo = void 0;
 const db_1 = __importDefault(require("../db/db"));
 // Crear préstamo con validación de caja y registro de egreso (Transacción)
 const createPrestamo = async (prestamo) => {
@@ -200,7 +200,7 @@ const rechazarPrestamo = async (prestamo_id) => {
         // 3. cambiar estado  del egreso 
         const egreso = await client.query(`UPDATE egresos_operacion
        SET estado_egreso = 'rechazado'
-       WHERE usuario_id = $1 AND concepto = 'Desembolso Préstamo #' || $2`, [prestamo.id_usuario_creacion, prestamo_id]);
+       WHERE usuario_id = $1 AND concepto = 'Desembolso Préstamo #' || $2 returning *`, [prestamo.id_usuario_creacion, prestamo_id]);
         if (egreso.rows.length === 0) {
             throw new Error('Error al actualizar el estado del egreso.');
         }
@@ -364,6 +364,13 @@ const deletePrestamo = async (prestamo_id) => {
     }
 };
 exports.deletePrestamo = deletePrestamo;
+//buscar prestamo por id prestamo
+const buscarPrestamoById = async (prestamo_id) => {
+    const result = await db_1.default.query(`SELECT * FROM prestamos 
+    WHERE prestamo_id = $1 and estado_prestamo = 'en curso'`, [prestamo_id]);
+    return result.rows[0] || null;
+};
+exports.buscarPrestamoById = buscarPrestamoById;
 exports.default = {
     createPrestamo: exports.createPrestamo,
     getAllPrestamos: exports.getAllPrestamos,
@@ -379,5 +386,6 @@ exports.default = {
     deletePrestamo: exports.deletePrestamo,
     rechazarPrestamo: exports.rechazarPrestamo,
     PrestamosPendientes: exports.PrestamosPendientes,
-    createPrestamoAdmin: exports.createPrestamoAdmin
+    createPrestamoAdmin: exports.createPrestamoAdmin,
+    buscarPrestamoById: exports.buscarPrestamoById
 };

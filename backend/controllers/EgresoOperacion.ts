@@ -122,10 +122,26 @@ export const confirmarEgresosOperacion = async (req: Request, res: Response): Pr
   }
 };
 
+export const getEgresosOperacionCobrador = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const usuario_id = parseInt(req.params.usuario_id);
+    const fecha_apertura = new Date().toISOString().split('T')[0];
+    const egresosOperacion = await EgresoOperacion.getEgresosOperacionCobrador(usuario_id, fecha_apertura);
+    if (!egresosOperacion || egresosOperacion.length === 0) {
+      return res.status(404).send({ error: 'No se encontraron egresos de operación' });
+    }
+    return res.status(200).json(egresosOperacion);
+  } catch (error) {
+   
+    return res.status(500).send({ error: 'Error al obtener los egresos de operación' });
+  }
+};
+
 export default {
   createEgresoOperacion,
   getAllEgresosOperacionPendientes,
   getEgresosPendientesByUsuarioId,
+  getEgresosOperacionCobrador,
   deleteEgresoOperacion,
   updateEgresoOperacion,
   confirmarEgresosOperacion

@@ -15,8 +15,8 @@ const CajaDiaria_1 = __importDefault(require("../models/CajaDiaria"));
 const createCobro = async (req, res) => {
     try {
         //validar si el prestamo existe
-        const prestamoExistente = await prestamo_1.default.getPrestamoById(req.body.prestamo_id);
-        if (!prestamoExistente) {
+        const prestamoExistente = await prestamo_1.default.buscarPrestamoById(req.body.prestamo_id);
+        if (!prestamoExistente || prestamoExistente === null) {
             return res.status(404).send({ error: 'Préstamo no encontrado' });
         }
         if (prestamoExistente.estado_prestamo !== 'en curso') {
@@ -37,6 +37,9 @@ const createCobro = async (req, res) => {
         //console.log('Cobrador asignado al préstamo:', cobradorPrestamo,req.body.usuario_id);
         if (cobradorPrestamo.usuario_id !== req.body.usuario_id) {
             return res.status(400).json({ error: 'El usuario no es el cobrador asignado para este préstamo' });
+        }
+        if (!prestamoExistente.saldo_pendiente || prestamoExistente.saldo_pendiente <= 0) {
+            return res.status(400).json({ error: 'El préstamo ya ha sido pagado en su totalidad' });
         }
         //validar que el monto del cobro no sea mayor al monto del prestamo
         if (req.body.monto_cobrado > prestamoExistente.saldo_pendiente) {

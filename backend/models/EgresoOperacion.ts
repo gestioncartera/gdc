@@ -1,6 +1,7 @@
 import e from "express";
 import  db   from "../db/db";
 import ruta from "./ruta";
+import usuario from "./usuario";
 
 export interface EgresoOperacion {
   egreso_id?: number;
@@ -213,6 +214,16 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
   }
 };
 
+//Obtener los egresos por cobrador en el dia
+export const getEgresosOperacionCobrador = async (usuario_id: number, fecha_apertura: String): Promise<EgresoOperacion[]> => {
+  const result = await db.query(
+    `SELECT * FROM egresos_operacion
+      WHERE usuario_id = $1 AND date(fecha_gasto) = date($2)`,
+    [usuario_id, fecha_apertura]
+  );
+  return result.rows;
+}
+
 export default {
   createEgresoOperacion,
   getAllEgresosOperacionPendientes,
@@ -221,5 +232,6 @@ export default {
   deleteEgresoOperacion,
   updateEgresoOperacion,
   confirmarEgresosOperacion,
-  getEgresosPendientesByUsuarioId
+  getEgresosPendientesByUsuarioId,
+  getEgresosOperacionCobrador
 };

@@ -19,7 +19,7 @@ export const createCobro = async (req: Request, res: Response): Promise<Response
     if (!prestamoExistente || prestamoExistente === null) {
       return res.status(404).send({ error: 'Préstamo no encontrado' });
     }
-console.log(prestamoExistente);
+
 
     if(prestamoExistente.estado_prestamo !== 'en curso') {
       return res.status(400).send({ error: 'No se pueden agregar cobros, prestamo no vigente' });
