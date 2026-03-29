@@ -147,7 +147,9 @@ export const getCobrosByRutaId = async (ruta_id: number): Promise<Cobro[]|any> =
 //obtener cobros por prestamo ID
 export const getCobrosByPrestamoId = async (prestamo_id: number): Promise<Cobro[]|any> => {
   const result = await db.query
-  (`SELECT c.fecha_cobro, 
+  (`SELECT 
+    c.cobro_id,
+    c.fecha_cobro, 
     sum(c.monto_cobrado) as monto_cobrado, 
     c.estado,
     p.fecha_desembolso,

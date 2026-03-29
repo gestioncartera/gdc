@@ -536,6 +536,8 @@ GROUP BY tb_intereses.sucursal
   return result.rows[0].intereses_proyectados_totales || 0;
 };
 
+//Toatl en mora por sucursal
+
  export default{
   createPrestamo,
   getAllPrestamos,
