@@ -411,6 +411,8 @@ const resumenCobrosCoradorRuta = async (sucursal_id: number, fecha: string): Pro
     GROUP BY u.usuario_id, r.ruta_id, p.cant`,
     [sucursal_id, fecha]
   );
+  
+  
   return result.rows;
 };
 
