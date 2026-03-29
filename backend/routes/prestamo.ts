@@ -13,6 +13,8 @@ router.get("/getPrestamoInfoById/:prestamo_id", auth, prestamo.getPrestamoInfoBy
 router.get("/prestamoCobros/:prestamo_id", auth, prestamo.getPrestamoAndCobrosInfo);
 router.get("/prestamosPendientes/:sucursal_id", auth, prestamo.PrestamosPendientes);
 router.get("/totalCarteraSucursal/:sucursal_id", auth, prestamo.getTotalCarteraSucursal);
+router.get("/getCapitalEnCalle/:sucursal_id", auth, prestamo.getCapitalEnCalle);
+router.get("/getInteresesProyectados/:sucursal_id", auth, prestamo.getInteresesProyectados);
 router.patch("/updatePrestamo/:id", auth, prestamo.updatePrestamo);
 router.delete("/deletePrestamo/:id", auth, prestamo.deletePrestamo);
 router.patch("/confirmarPrestamo/:prestamo_id", auth, prestamo.confirmarPrestamo);

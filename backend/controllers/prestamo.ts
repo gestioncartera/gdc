@@ -286,6 +286,35 @@ export const PrestamosPendientes = async (req: Request, res: Response): Promise<
   }
 }
 
+export const getCapitalEnCalle = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    if (!sucursal_id) {
+      return res.status(400).send({ error: 'Faltan parámetros requeridos' });
+    }
+    const capitalEnCalle = await prestamo.getCapitalEnCalle(sucursal_id);
+    return res.status(200).json({ capital_en_calle: capitalEnCalle });
+  } catch (error) {
+      //console.error(error);
+    return res.status(500).send({ error: 'Error al obtener el capital en calle' });
+  }
+};
+
+export const getInteresesProyectados = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    if (!sucursal_id) {
+      return res.status(400).send({ error: 'Faltan parámetros requeridos' });
+    }
+    const interesesProyectados = await prestamo.getInteresesProyectados(sucursal_id);
+    return res.status(200).json({ intereses_proyectados: interesesProyectados });
+  } catch (error) {
+      //console.error(error);
+    return res.status(500).send({ error: 'Error al obtener los intereses proyectados' });
+  }
+};
+
+
 // Eliminar un préstamo
 export const deletePrestamo = async (req: Request, res: Response): Promise<Response> => {
     try {   
@@ -353,6 +382,8 @@ export default {
   getPrestamosInfo,
   getPrestamoInfoById,
   getTotalCarteraSucursal,
+  getCapitalEnCalle,
+  getInteresesProyectados,
   updatePrestamo,
   deletePrestamo,
   getPrestamoAndCobrosInfo,
