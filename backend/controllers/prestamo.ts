@@ -164,6 +164,8 @@ export const getPrestamoAndCobrosInfo = async (req: Request, res: Response): Pro
 
     return res.status(200).json(prestamosCobrosInfo);
   } catch (error) {
+    
+    
     return res.status(500).json({ error: 'Error al obtener la información del préstamo y cobros' });
   }
 };
@@ -314,6 +316,20 @@ export const getInteresesProyectados = async (req: Request, res: Response): Prom
   }
 };
 
+export const getDesglosePrestamos = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    if (!sucursal_id) {
+      return res.status(400).send({ error: 'Faltan parámetros requeridos' });
+    }
+    const desglosePrestamos = await prestamo.getDesglosePrestamos(sucursal_id);
+    return res.status(200).json(desglosePrestamos);
+  } catch (error) {
+      //console.error(error);
+    return res.status(500).send({ error: 'Error al obtener el desglose de préstamos' });
+  }
+};
+
 
 // Eliminar un préstamo
 export const deletePrestamo = async (req: Request, res: Response): Promise<Response> => {
@@ -328,6 +344,8 @@ export const deletePrestamo = async (req: Request, res: Response): Promise<Respo
         return res.status(500).send({ error: 'Error al eliminar el préstamo' });
     }
 };
+
+
 
 
 // Función para sumar días hábiles a una fecha de prestamo
@@ -384,6 +402,7 @@ export default {
   getTotalCarteraSucursal,
   getCapitalEnCalle,
   getInteresesProyectados,
+  getDesglosePrestamos,
   updatePrestamo,
   deletePrestamo,
   getPrestamoAndCobrosInfo,

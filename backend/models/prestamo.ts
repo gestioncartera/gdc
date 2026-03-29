@@ -536,7 +536,26 @@ GROUP BY tb_intereses.sucursal
   return result.rows[0].intereses_proyectados_totales || 0;
 };
 
-//Toatl en mora por sucursal
+//Desglose de prestamos
+export const getDesglosePrestamos = async (sucursal_id:number): Promise<Prestamo[]> => {
+  const result = await db.query(`
+    SELECT
+      p.prestamo_id,
+      p.monto_prestamo,   
+      p.saldo_pendiente,      
+      p.estado_prestamo,
+      p.sucursal_id,      
+      c.nombres  ||' '||
+      c.apellidos AS  nombre     
+      FROM prestamos p
+      INNER JOIN clientes c ON p.cliente_id = c.cliente_id
+      where p.sucursal_id = $1 and p.estado_prestamo = 'en curso'
+      ORDER BY c.cliente_id ,p.prestamo_id asc
+    `,
+    [sucursal_id]
+  );
+  return result.rows;
+};
 
  export default{
   createPrestamo,
@@ -550,6 +569,7 @@ GROUP BY tb_intereses.sucursal
   getPrestamosEnCursoSucursal,
   getCapitalEnCalle,
   getInteresesProyectados,
+  getDesglosePrestamos,
   updatePrestamo,
   confirmarPrestamo,
   deletePrestamo,
