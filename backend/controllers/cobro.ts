@@ -31,14 +31,19 @@ export const createCobro = async (req: Request, res: Response): Promise<Response
       return res.status(404).send({ error: 'Cobrador no encontrado' });
     }
     
+    
     //validar que la fecha de la caja diaria en curso sea igual al día del cobro
     const cajaDiaria = await CajaDiaria.getCajasDiariasByUsuario(req.body.usuario_id);
+     
     if (!cajaDiaria || cajaDiaria.length === 0 || !cajaDiaria[0].fecha_apertura) {
       return res.status(404).send({ error: 'No hay caja diaria abierta para este cobrador' });
     }
-    const fechaCaja = new Date(cajaDiaria[0].fecha_apertura).toISOString().split('T')[0];
-    const fechaCobro = new Date(req.body.fecha_cobro).toISOString().split('T')[0];
-    if (fechaCaja !== fechaCobro) {
+   
+    const  fechaCaja = cajaDiaria[0].fecha_apertura;    
+    const fechaCobro= new Date();
+   
+    
+    if (fechaCaja.toISOString().split('T')[0] !== fechaCobro.toISOString().split('T')[0]) {
       return res.status(400).send({ error: 'La fecha del cobro no coincide con la fecha de la caja diaria' });
     }
 
@@ -69,6 +74,7 @@ if(!prestamoExistente.saldo_pendiente || prestamoExistente.saldo_pendiente <= 0)
     ? res.status(400).send({ error: 'No se pudo crear el cobro' }) 
     : res.status(201).json(newCobro);
   } catch (error) {
+  console.log(error);
   
     return res.status(500).json({ error: 'Error al crear el cobro' });
   }
