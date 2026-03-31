@@ -326,16 +326,22 @@ export const validarMultiplesCobros = async (req: Request, res: Response): Promi
 
 const resumenCobrosCoradorRuta = async (req: Request, res: Response): Promise<Response> => {
   try {
+   
+    
     const  sucursal_id  = parseInt(req.params.sucursal_id);
         
     const existeSucursal = await sucursal.getSucursalById(sucursal_id);
+   
+    
     if (!existeSucursal || existeSucursal === null) {
-      return res.status(404).send({ error: 'No se encontraron rutas para la sucursal especificada' });
+     return res.status(404).send({ error: 'No se encontraron rutas para la sucursal especificada' });
     }
+
+
 
     const resultado = await cobro.resumenCobrosCoradorRuta(sucursal_id,new Date().toISOString().split('T')[0]);
 if (!resultado || resultado.length === 0) {
-      return res.status(404).send({ error: 'No se encontraron cobros para la sucursal especificada' });
+     // return res.status(404).send({ error: 'No se encontraron cobros para la sucursal especificada' });
     }
     return res.status(200).json(resultado);
   } catch (error) {
