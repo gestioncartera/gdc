@@ -42,7 +42,23 @@ return res.status(201).json(newCajaSucursal);
   }
 };
 
+export const cajaInicialSucursal = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const idsucursal=parseInt(req.params.sucursal_id);
+    const saldoInicial = await CajaSucursal.cajaInicialSucursal(idsucursal);
+    if (!saldoInicial) {
+      return res.status(404).send({ message: "No se encontró el saldo inicial de la caja de sucursal" });
+    }
+    return res.status(200).json(saldoInicial);
+  } catch (error) {
+    console.log(error);
+    
+    return res.status(500).send({ message: "Error al obtener el saldo inicial de la caja de sucursal" });
+  }
+};
+
 export default {
   createCajaSucursal,
   getAllCajasSucursal,
+  cajaInicialSucursal
 };

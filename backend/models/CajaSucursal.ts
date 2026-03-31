@@ -38,8 +38,25 @@ export const getCajaSucursalById = async (caja_sucursal_id: number): Promise<Caj
   return result.rows[0] || null;
 };
 
+export const cajaInicialSucursal = async (sucursal_id: number): Promise<CajaSucursal | null> => {
+
+  const result = await db.query(
+    `select sum(monto) as saldo_inicial from  cajas_sucursales
+    inner join movimientos_caja_sucursal as  ms  on cajas_sucursales.caja_sucursal_id = ms.caja_sucursal_id
+    where cajas_sucursales.sucursal_id = $1 
+    and ms.tipo_movimiento = 'ingreso' 
+    and ms.estado_movto = 'confirmado'
+    and ms.descripcion like '%aporte%'`,
+    [
+    sucursal_id
+]
+  );
+  return result.rows[0];
+};
+
 export default {
   createCajaSucursal,
   getCajaSucursalBySucursalId,
-  getCajaSucursalById
+  getCajaSucursalById,
+  cajaInicialSucursal
 };

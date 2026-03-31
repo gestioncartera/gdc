@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post("/createCajaSucursal",  CajaSucursal.createCajaSucursal);
 router.get("/getCajaSucursal/:sucursal_id",  CajaSucursal.getAllCajasSucursal);
+router.get("/cajaInicialSucursal/:sucursal_id",  CajaSucursal.cajaInicialSucursal);
 
 
 export default router;
