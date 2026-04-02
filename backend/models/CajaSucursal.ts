@@ -54,9 +54,91 @@ export const cajaInicialSucursal = async (sucursal_id: number): Promise<CajaSucu
   return result.rows[0];
 };
 
+export const getGastosSucursal = async (sucursal_id: number): Promise<number> => {
+
+
+  const result = await db.query(
+    ` select sum(ms.monto) as gastos 
+    from  cajas_sucursales
+    inner join movimientos_caja_sucursal as  ms  on cajas_sucursales.caja_sucursal_id = ms.caja_sucursal_id
+    where cajas_sucursales.sucursal_id = $1
+    and ms.tipo_movimiento = 'egreso'
+    and ms.estado_movto = 'confirmado'    
+    and (ms.descripcion not like '%caja diaria%' and ms.descripcion not like 'Desembolso Pr%' and ms.descripcion not like 'Reembolso%')`,
+    [
+    sucursal_id
+]
+  );
+ 
+  
+  return result.rows[0].gastos || 0;
+};
+
+export const getSumPrestamosSucursal = async (sucursal_id: number): Promise<number> => {
+  const result = await db.query(
+    `
+    select sum(ms.monto) as total_prestamos 
+    from cajas_sucursales
+    inner join movimientos_caja_sucursal as  ms  on cajas_sucursales.caja_sucursal_id = ms.caja_sucursal_id
+    where cajas_sucursales.sucursal_id = $1
+    and ms.tipo_movimiento = 'egreso'
+    and ms.estado_movto = 'confirmado'  
+    and ms.descripcion like 'Desembolso Pr%'`,
+    [sucursal_id]
+  );
+  return result.rows[0].total_prestamos || 0;
+};
+
+export const getSumReembolsosSucursal = async (sucursal_id: number): Promise<number> => {
+  const result = await db.query(
+    ` select sum(ms.monto) as total_reembolsos 
+    from cajas_sucursales
+    inner join movimientos_caja_sucursal as  ms  on cajas_sucursales.caja_sucursal_id = ms.caja_sucursal_id 
+    where cajas_sucursales.sucursal_id = $1
+    and ms.tipo_movimiento = 'ingreso'
+    and ms.estado_movto = 'confirmado'
+    and ms.descripcion like 'Reembolso a socios%'`,
+    [sucursal_id]
+  );
+  return result.rows[0].total_reembolsos || 0;
+};
+
+export const getReporteGastosSucursal = async (sucursal_id: number): Promise<any> => {
+  const result = await db.query(
+    ` SELECT 
+      SUM(CASE 
+        WHEN ms.tipo_movimiento = 'egreso' 
+             AND ms.descripcion NOT LIKE '%caja diaria%' 
+             AND ms.descripcion NOT LIKE 'Desembolso Pr%' 
+             AND ms.descripcion NOT LIKE 'Reembolso%' 
+        THEN ms.monto ELSE 0 END) AS gastos,
+
+      SUM(CASE 
+        WHEN ms.tipo_movimiento = 'egreso' 
+             AND ms.descripcion LIKE 'Desembolso Pr%' 
+        THEN ms.monto ELSE 0 END) AS total_prestamos,
+
+      SUM(CASE 
+        WHEN ms.tipo_movimiento = 'egreso' 
+             AND ms.descripcion LIKE 'Reembolso%' 
+        THEN ms.monto ELSE 0 END) AS total_reembolsos
+
+    FROM cajas_sucursales
+    INNER JOIN movimientos_caja_sucursal AS ms 
+        ON cajas_sucursales.caja_sucursal_id = ms.caja_sucursal_id
+    WHERE cajas_sucursales.sucursal_id = $1
+      AND ms.estado_movto = 'confirmado';`,
+    [sucursal_id]
+  );
+  return result.rows[0] || { gastos: 0, total_prestamos: 0, total_reembolsos: 0 };
+}
+
 export default {
   createCajaSucursal,
   getCajaSucursalBySucursalId,
   getCajaSucursalById,
-  cajaInicialSucursal
+  getSumPrestamosSucursal,
+  cajaInicialSucursal,
+  getGastosSucursal,
+  getReporteGastosSucursal
 };

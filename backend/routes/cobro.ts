@@ -13,6 +13,7 @@ router.get('/getCobrosByPrestamoId/:prestamo_id', auth, cobro.getPrestamoCobrosH
 router.get('/getTotalCobradoHoy/:sucursal_id', auth, cobro.getTotalCobradoHoy);
 router.get('/getCantCobrosHoy/:sucursal_id', auth, cobro.getCantCobrosHoy);
 router.get('/resumenCobrosCoradorRuta/:sucursal_id', auth, cobro.resumenCobrosCoradorRuta);
+router.get('/getSumatoriaCobrosSucursal/:sucursal_id', auth, cobro.getSumatoriaCobrosSucursal);
 router.patch('/updateMontoCobroConCaja/:cobro_id', auth, cobro.updateMontoCobroConCaja);
 //router.put('/updateCobro/:cobro_id', auth, cobro.updateCobro);
 router.delete('/deleteCobro/:cobro_id', auth, cobro.deleteCobro);

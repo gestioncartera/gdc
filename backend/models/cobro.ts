@@ -416,6 +416,20 @@ const resumenCobrosCoradorRuta = async (sucursal_id: number, fecha: string): Pro
   return result.rows;
 };
 
+//sumatoria de todos cobros realizados en una sucursal 
+
+const getSumatoriaCobrosSucursal = async (sucursal_id: number): Promise<number> => {
+  const result = await db.query(
+    `SELECT SUM(c.monto_cobrado) AS total_cobrado
+     FROM prestamos p
+     inner join cobros  c on p.prestamo_id = c.prestamo_id and c.estado = 'confirmado'
+     WHERE p.sucursal_id = $1 and p.estado_prestamo<>'rechazado' `,
+    [sucursal_id]
+  );
+  return result.rows[0].total_cobrado || 0;
+};
+
+
 export default {
   createCobro,
   getAllCobros,
@@ -428,6 +442,7 @@ export default {
   getCobrosPendientesByUsuarioId,
   getTotalCobradoHoy,
   getCantCobrosHoy,
+  getSumatoriaCobrosSucursal,
   updateMontoCobroConCaja,
   updateCobro,
   deleteCobro,

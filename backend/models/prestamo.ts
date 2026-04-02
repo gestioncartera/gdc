@@ -499,6 +499,17 @@ export const getCapitalEnCalle = async (sucursal_id: number): Promise<number> =>
   return result.rows[0].capital_en_calle || 0;
 };
 
+//obtener la sumatoria de prestamos realizados por sucursal
+export const getTotalPrestamosBySucursal = async (sucursal_id: number): Promise<number> => {
+  const result = await db.query(
+    `SELECT SUM(monto_prestamo) AS total_prestamos
+     FROM prestamos
+     WHERE sucursal_id = $1 AND estado_prestamo <> 'rechazado '`,
+    [sucursal_id]
+  );
+  return result.rows[0].total_prestamos || 0;
+};
+
 //Obtener los interes proyectados por una sucursal
 export const getInteresesProyectados = async (sucursal_id: number): Promise<number> => {
   const result = await db.query(

@@ -243,6 +243,19 @@ export const getCantCobrosHoy = async (req: Request, res: Response): Promise<Res
   }
 };
 
+export const getSumatoriaCobrosSucursal = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    const sumatoriaCobros = await cobro.getSumatoriaCobrosSucursal(sucursal_id);
+    if (sumatoriaCobros === null || sumatoriaCobros === undefined) {
+      return res.status(404).send({ error: 'No se encontraron cobros para la sucursal especificada' });
+    }
+    return res.status(200).json({'sumatoria_cobros_sucursal': sumatoriaCobros});
+  } catch (error) {
+    return res.status(500).send({ error: 'Error al obtener la sumatoria de cobros de la sucursal' });
+  }
+};
+
 // Actualizar un cobro
 export const updateCobro = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -337,17 +350,17 @@ const resumenCobrosCoradorRuta = async (req: Request, res: Response): Promise<Re
      return res.status(404).send({ error: 'No se encontraron rutas para la sucursal especificada' });
     }
 
-
-
     const resultado = await cobro.resumenCobrosCoradorRuta(sucursal_id,new Date().toISOString().split('T')[0]);
 if (!resultado || resultado.length === 0) {
-     // return res.status(404).send({ error: 'No se encontraron cobros para la sucursal especificada' });
+      return res.status(404).send({ error: 'No se encontraron cobros para la sucursal especificada' });
     }
     return res.status(200).json(resultado);
   } catch (error) {
     return res.status(500).send({ error: 'Error al obtener el resumen de cobros por corador y ruta' });
   }
 };
+
+
 
 // Función para sumar días hábiles a una fecha de prestamo
 function calcularPlanDePagos(fechaInicio: Date, fechaFin: Date,cobrosHistory:any[]):any[] {
@@ -395,6 +408,7 @@ export default {
   getCobroInfoById,
   getTotalCobradoHoy,
   getCantCobrosHoy,
+  getSumatoriaCobrosSucursal,
   updateCobro,
   updateMontoCobroConCaja,
   deleteCobro,
