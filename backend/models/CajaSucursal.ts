@@ -127,7 +127,7 @@ export const getReporteGastosSucursal = async (sucursal_id: number): Promise<any
     INNER JOIN movimientos_caja_sucursal AS ms 
         ON cajas_sucursales.caja_sucursal_id = ms.caja_sucursal_id
     WHERE cajas_sucursales.sucursal_id = $1
-      AND ms.estado_movto = 'confirmado';`,
+      AND ms.estado_movto = 'confirmado'`,
     [sucursal_id]
   );
   return result.rows[0] || { gastos: 0, total_prestamos: 0, total_reembolsos: 0 };
