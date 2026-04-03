@@ -4,7 +4,6 @@ import  dotenv, { config }  from 'dotenv';
 import  db  from './db/db';
 
 import  sucursal  from './routes/sucursal'; 
-import  periodo  from './routes/periodo';
 import  ruta  from './routes/ruta';
 import  cliente from './routes/cliente';
 import usuario from './routes/usuario';
@@ -13,7 +12,10 @@ import TipoPrestamo from './routes/TipoPrestamo';
 import AsignacionRuta from './routes/AsignacionRuta';
 import prestamo from './routes/prestamo';
 import cobro from './routes/cobro';
-import GastoOperacion from './routes/GastoOperacion';
+import EgresoOperacion from './routes/EgresoOperacion';
+import CajaSucursal from './routes/CajaSucursal';
+import movtoCajaSucursal from './routes/movimiento_caja_sucursal';
+import CajaDiaria  from './routes/CajaDiaria';
 
 dotenv.config();
 
@@ -23,7 +25,6 @@ app.use(express.json());
 app.use(cors());
 
 app.use('/api/sucursal', sucursal);
-app.use('/api/periodo', periodo);
 app.use('/api/ruta', ruta);
 app.use('/api/cliente', cliente);
 app.use('/api/usuario', usuario);
@@ -32,8 +33,10 @@ app.use('/api/tipoprestamo', TipoPrestamo);
 app.use('/api/asignacionruta', AsignacionRuta);
 app.use('/api/prestamo', prestamo);
 app.use('/api/cobro', cobro);
-app.use('/api/gastooperacion', GastoOperacion);
-
+app.use('/api/egresooperacion', EgresoOperacion);
+app.use('/api/cajasucursal', CajaSucursal);
+app.use('/api/movimientocajasucursal', movtoCajaSucursal);
+app.use('/api/cajadiaria', CajaDiaria);
 
 app.listen(process.env.PORT,()=>console.log(`Server running on port ${process.env.PORT}`));
 

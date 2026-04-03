@@ -1,0 +1,14 @@
+import EgresoOperacion from "../controllers/EgresoOperacion";
+import express from "express";
+import auth from "../middlewares/auth";
+
+const router = express.Router();
+
+router.post("/createEgresoOperacion", auth, EgresoOperacion.createEgresoOperacion); 
+router.get("/getAllEgresosOperacionPendientes/:usuario_id", auth, EgresoOperacion.getAllEgresosOperacionPendientes);
+router.get("/getEgresosOperacionCobrador/:usuario_id", auth, EgresoOperacion.getEgresosOperacionCobrador);
+router.delete("/egresooperacion/:id", auth, EgresoOperacion.deleteEgresoOperacion);
+router.put("/egresooperacion/:id", auth, EgresoOperacion.updateEgresoOperacion);
+router.post("/confirmarEgresosOperacion/:usuario_id", auth, EgresoOperacion.confirmarEgresosOperacion);
+
+export default router;

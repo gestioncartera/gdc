@@ -8,17 +8,18 @@ export interface Usuario {
   apellidos: string;
   dni: string;
   telefono?: string;
-  email?: string;
+  email: string;
   tipo_usuario: number; // Foreign key to TipoUsuario
   estado?: string; 
   created_at?: Date;
+  password: string;
 }
 
 //crear usuario
 export const createUsuario = async (usuario: Usuario): Promise<Usuario|null> => {
   const newUsuario =
   await db.query(
-    'INSERT INTO usuarios (sucursal_id, nombres, apellidos, dni, telefono, email, tipo_usuario, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+    'INSERT INTO usuarios (sucursal_id, nombres, apellidos, dni, telefono, email, tipo_usuario, estado, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 ) RETURNING *',
     [
       usuario.sucursal_id,
       usuario.nombres,
@@ -27,7 +28,9 @@ export const createUsuario = async (usuario: Usuario): Promise<Usuario|null> => 
       usuario.telefono || null,
       usuario.email || null,
       usuario.tipo_usuario,
-      usuario.estado||'activo'
+      usuario.estado||'activo',
+      usuario.password
+
 
     ]
   );
@@ -35,8 +38,9 @@ export const createUsuario = async (usuario: Usuario): Promise<Usuario|null> => 
 }
 
 //obtener todos los usuarios
-export const getUsuarios = async (): Promise<Usuario[]> => {
-  const result = await db.query('SELECT * FROM usuarios');
+export const getUsuarios = async (idSucursal: number): Promise<Usuario[]> => {
+  const result = await db.query( `SELECT * FROM usuarios WHERE sucursal_id = $1 order by usuario_id asc`, 
+    [idSucursal]); 
   return result.rows;
 }
 
@@ -76,6 +80,15 @@ export const updateUsuario = async (id: number, usuario: Partial<Usuario>): Prom
   return updatedUsuario.rows[0] || null;
 }
 
+//actualizar contraseña de usuario
+export const updatePassword = async (id: number, newPassword: string): Promise<Usuario | null> => {
+  const updatedUsuario = await db.query(
+    `UPDATE usuarios SET password = $1 WHERE usuario_id = $2 RETURNING *`,
+    [newPassword, id]
+  );
+  return updatedUsuario.rows[0] || null;
+}
+
 //eliminar usuario
 export const deleteUsuario = async (id: number): Promise<Usuario | null > => {
   const deletedUsuario = await db.query(
@@ -85,11 +98,47 @@ export const deleteUsuario = async (id: number): Promise<Usuario | null > => {
   return deletedUsuario.rows[0] || null;
 }
 
+//obtener usuario por correo
+export const getUsuarioByEmail = async (email: string): Promise<Usuario | null> => {
+
+  const result = await db.query('SELECT * FROM usuarios WHERE email = $1',
+    [
+      email
+    ]);
+    
+  return result.rows[0] || null;
+}
+
+//obtener cobradores activos y con ruta asignada
+export const getCobradoresActivos = async (idSucursal: number): Promise<Usuario[]> => {
+  const result = await db.query(
+    `SELECT u.* FROM usuarios u
+     inner JOIN asignaciones_rutas ar ON u.usuario_id = ar.usuario_id and ar.estado = 'activo'
+     WHERE u.sucursal_id = $1  AND u.tipo_usuario = 2 AND u.estado = 'activo' order by u.usuario_id asc`,
+    [idSucursal]
+  );
+  return result.rows;
+}
+
+export const esAdmin = async (id: number): Promise<boolean> => {
+  const result = await db.query(
+    'SELECT * FROM usuarios WHERE usuario_id = $1 AND tipo_usuario = 1',
+    [id]
+  );
+  return result.rows[0] ? true : false;
+}
+
+
+
 export default {
   createUsuario,
   getUsuarios,
   getUsuarioById,
   getUsuarioByDNI,
+  getUsuarioByEmail,
   updateUsuario,
-  deleteUsuario
+  updatePassword,
+  deleteUsuario,
+  getCobradoresActivos,
+  esAdmin
 };

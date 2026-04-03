@@ -1,15 +1,77 @@
 import prestamo from "../models/prestamo";
+import cliente from "../models/cliente";
+import cobro from "../models/cobro";
+import Tipoprestamo from "../models/TipoPrestamo";
+import usuario from "../models/usuario";
 import { Request, Response } from "express";
 
 // Crear un nuevo préstamo
 export const createPrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const newPrestamo = await prestamo.createPrestamo(req.body);
-    return (!newPrestamo) 
-    ? res.status(400).send({ error: 'No se pudo crear el préstamo' }) 
-    :  res.status(201).json(newPrestamo);
-  } catch (error) {
-    return res.status(500).json({ error: 'Error al crear el préstamo' });
+    // 1. Validar solo lo necesario (quitamos valor_intereses porque lo calculamos nosotros)
+    if (!req.body.cliente_id || !req.body.sucursal_id ||  !req.body.monto_prestamo || !req.body.tipo_prestamo_id || !req.body.id_usuario_creacion) {
+      return res.status(400).json({ error: 'Faltan datos obligatorios para crear el préstamo' });
+    }
+
+    // 2. Validar que el cliente exista 
+    const existeCliente = await cliente.getClienteById(req.body.cliente_id);
+    if (!existeCliente) {
+      return res.status(404).json({ error: 'El cliente especificado no existe' });
+    }
+
+    //validar si el usuario creador es admin o cobrador
+    const admin = await usuario.esAdmin(req.body.id_usuario_creacion);
+    if(admin === true){
+        req.body.estado_prestamo = 'en curso';
+    }
+
+    // 3. Validar tipo de préstamo
+    const tipoPrestamo = await Tipoprestamo.getTipoPrestamoById(req.body.tipo_prestamo_id);
+    if (!tipoPrestamo || tipoPrestamo.length === 0) {
+      return res.status(400).send({ error: 'El tipo de préstamo especificado no existe' });
+    }
+
+    const tPrestamo = tipoPrestamo[0]; // Alias para simplificar lectura
+
+    // 4. Cálculos Financieros y Fechas (Usando Helper)
+    const calculos = calcularDetallesPrestamo(req.body.monto_prestamo, tPrestamo);
+    
+    // Fusionar cálculos en el body
+    req.body = { ...req.body, ...calculos };
+
+    let newPrestamo:any = null;
+    // 6. Insertar
+    if(admin === true){
+       newPrestamo = await prestamo.createPrestamoAdmin(req.body);
+    }
+    else{
+       newPrestamo = await prestamo.createPrestamo(req.body);
+    }
+    //const newPrestamo = await prestamo.createPrestamo(req.body);
+    if (!newPrestamo) {
+      return res.status(400).send({ error: 'No se pudo crear el préstamo' });
+    }
+   
+    return res.status(201).send({message:"Préstamo creado exitosamente"});
+
+  } catch (error: any) {
+    //console.error(error);
+    
+    // Errores de negocio/validación del modelo (caja diaria cerrada, saldo insuficiente, etc.)
+    const erroresNegocio = [
+      'caja diaria abierta',
+      'Saldo insuficiente',
+      'No se pudo crear'
+    ];
+    
+    const esErrorNegocio = erroresNegocio.some(msg => error.message?.includes(msg));
+    
+    if (esErrorNegocio) {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    // Errores inesperados del servidor
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -39,19 +101,235 @@ export const getPrestamoById = async (req: Request, res: Response): Promise<Resp
   }
 };
 
+//Obtener toda informacion de prestamo por id
+export const getPrestamoInfoById = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const id = parseInt(req.params.prestamo_id);
+    const prestamoInfo = await prestamo.getPrestamoInfoById(id);
+    if (!prestamoInfo) {
+      return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+    return res.status(200).json(prestamoInfo);
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al obtener el préstamo' });
+  }
+};
+
+//obtener prestamos por cliente
+export const getPrestamosByClienteId = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const cliente_id = parseInt(req.params.cliente_id);
+//validar cliente 
+const existeCliente= await cliente.getClienteById(cliente_id);
+if (!existeCliente){
+  return  res.status(404).json({ error: 'Cliente no existe' });
+}
+
+    const prestamosByCliente = await prestamo.getPrestamosByClienteId(cliente_id);
+    if (!prestamosByCliente || prestamosByCliente.length === 0) {
+      return res.status(404).json({ error: 'No se encontraron préstamos para el cliente especificado' });
+    }
+    return res.status(200).json(prestamosByCliente);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Error al obtener los préstamos del cliente' });
+  }
+};
+
+//obtener informacion de prestamos y cobros
+export const getPrestamoAndCobrosInfo = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    
+
+    const idPrestamo = parseInt(req.params.prestamo_id);
+    const prestamoInfo = await prestamo.getPrestamoById(idPrestamo);
+    if (!prestamoInfo) {
+      return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+
+    const prestamosCobrosInfo={
+      id_prestamo: prestamoInfo.prestamo_id,
+      nombre_cliente:prestamoInfo.cliente,
+      saldo_pendiente:prestamoInfo.saldo_pendiente,
+      valor_cuota:prestamoInfo.valor_cuota,
+      fecha_fin_prestamo:prestamoInfo.fecha_fin_prestamo,
+      nombre_ruta:prestamoInfo.nombre_ruta,
+      data:[]
+    };
+
+    const cobros = await cobro.getCobrosByPrestamoId(idPrestamo);
+    if (cobros && cobros.length > 0) {
+      prestamosCobrosInfo.data = cobros;
+    }
+
+    return res.status(200).json(prestamosCobrosInfo);
+  } catch (error) {
+    
+    
+    return res.status(500).json({ error: 'Error al obtener la información del préstamo y cobros' });
+  }
+};
+
+//obtener prestamos con informacion de cliente
+export const getPrestamosInfo = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const prestamosInfo = await prestamo.getPrestamosInfo();
+    return (!prestamosInfo ) 
+    ? res.status(404).send({ error: 'No existen préstamos creados' }) 
+    : res.status(200).json(prestamosInfo);
+  } catch (error) {
+    //console.error(error);
+    return res.status(500).json({ error: 'Error al obtener los préstamos' });
+  }
+};
+
+//Obtener total carte de una sucursal
+export const getTotalCarteraSucursal = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    const totalCartera = await prestamo.getTotalCarteraSucursal(sucursal_id);
+    return res.status(200).json({ total_cartera: totalCartera });
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al obtener el total de la cartera de la sucursal' });
+  }
+};
+
+
 // Actualizar un préstamo   
 export const updatePrestamo = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const id = parseInt(req.params.id);
-    const updatedPrestamo = await prestamo.updatePrestamo(id, req.body);
-    if (!updatedPrestamo) {
+    //validar que el préstamo exista
+     const idPrestamo = parseInt(req.params.id);
+    const prestamoById = await prestamo.getPrestamoById(idPrestamo);
+    if (!prestamoById) {
       return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+
+    // Validar tipo de préstamo
+    const tipoPrestamo = await Tipoprestamo.getTipoPrestamoById(req.body.tipo_prestamo_id);
+    if (!tipoPrestamo || tipoPrestamo.length === 0) {
+      return res.status(400).send({ error: 'El tipo de préstamo especificado no existe' });
+    }
+
+    const tPrestamo = tipoPrestamo[0]; // Alias para simplificar lectura
+
+    const calculos = calcularDetallesPrestamo(req.body.monto_prestamo, tPrestamo);
+    
+    // Fusionar cálculos en el body
+    req.body = { ...req.body, ...calculos };
+
+
+    const updatedPrestamo = await prestamo.updatePrestamo(idPrestamo,req.body);
+    if (!updatedPrestamo) {
+      return res.status(404).json({ error: 'Préstamo no Actualizado' });
     }
     return res.status(200).json(updatedPrestamo);
     } catch (error) {
+     // console.error(error);
     return res.status(500).json({ error: 'Error al actualizar el préstamo' });
     }
 };
+
+// Confirmar un préstamo 
+export const confirmarPrestamo = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const idPrestamo = parseInt(req.params.prestamo_id);
+    const prestamoById = await prestamo.getPrestamoById(idPrestamo);
+    if (!prestamoById) {
+      return res.status(404).json({ error: 'Préstamo no encontrado' });
+    }
+
+    const updatedPrestamo = await prestamo.confirmarPrestamo(idPrestamo);
+    if (!updatedPrestamo) {
+      return res.status(404).json({ error: 'Préstamo no Actualizado' });
+    }
+    return res.status(200).json(updatedPrestamo);
+    } catch (error) {
+     // console.error(error);
+    return res.status(500).json({ error: 'Error al actualizar el préstamo' });
+    }
+};
+
+// Rechazar un préstamo
+export const rechazarPrestamo = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const idPrestamo = parseInt(req.params.prestamo_id);
+    const prestamoById = await prestamo.getPrestamoById(idPrestamo);
+    if (!prestamoById) {
+      return res.status(404).send({ error: 'Préstamo no encontrado' });
+    }
+
+    const updatedPrestamo = await prestamo.rechazarPrestamo(idPrestamo);
+    if (!updatedPrestamo) {
+      return res.status(404).send({ error: 'Préstamo no Actualizado' });
+    }
+    return res.status(200).json(updatedPrestamo);
+    } catch (error) {
+     //console.error(error);
+    return res.status(500).send({ error: 'Error al actualizar el préstamo' });
+    }
+};
+
+// Obtener préstamos pendientes
+export const PrestamosPendientes = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    if (!sucursal_id) {
+      return res.status(400).send({ error: 'Faltan parámetros requeridos' });
+    }
+    const prestamosPendientes = await prestamo.PrestamosPendientes(sucursal_id);
+    if (!prestamosPendientes || prestamosPendientes.length === 0) {
+      return res.status(404).send({ error: 'No hay préstamos pendientes para esta sucursal' });
+    }
+    return res.status(200).json(prestamosPendientes);
+  } catch (error) {
+      //console.error(error);
+    return res.status(500).send({ error: 'Error al obtener los préstamos pendientes' });
+  }
+}
+
+export const getCapitalEnCalle = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    if (!sucursal_id) {
+      return res.status(400).send({ error: 'Faltan parámetros requeridos' });
+    }
+    const capitalEnCalle = await prestamo.getCapitalEnCalle(sucursal_id);
+    return res.status(200).json({ capital_en_calle: capitalEnCalle });
+  } catch (error) {
+      //console.error(error);
+    return res.status(500).send({ error: 'Error al obtener el capital en calle' });
+  }
+};
+
+export const getInteresesProyectados = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    if (!sucursal_id) {
+      return res.status(400).send({ error: 'Faltan parámetros requeridos' });
+    }
+    const interesesProyectados = await prestamo.getInteresesProyectados(sucursal_id);
+    return res.status(200).json({ intereses_proyectados: interesesProyectados });
+  } catch (error) {
+      //console.error(error);
+    return res.status(500).send({ error: 'Error al obtener los intereses proyectados' });
+  }
+};
+
+export const getDesglosePrestamos = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const sucursal_id = parseInt(req.params.sucursal_id);
+    if (!sucursal_id) {
+      return res.status(400).send({ error: 'Faltan parámetros requeridos' });
+    }
+    const desglosePrestamos = await prestamo.getDesglosePrestamos(sucursal_id);
+    return res.status(200).json(desglosePrestamos);
+  } catch (error) {
+      //console.error(error);
+    return res.status(500).send({ error: 'Error al obtener el desglose de préstamos' });
+  }
+};
+
 
 // Eliminar un préstamo
 export const deletePrestamo = async (req: Request, res: Response): Promise<Response> => {
@@ -59,18 +337,76 @@ export const deletePrestamo = async (req: Request, res: Response): Promise<Respo
         const id = parseInt(req.params.id);
         const deletedPrestamo = await prestamo.deletePrestamo(id);
         if (!deletedPrestamo) {
-            return res.status(404).json({ error: 'Préstamo no encontrado' });
+            return res.status(404).send({ error: 'Préstamo no encontrado' });
         }
         return res.status(200).json(deletedPrestamo);
     } catch (error) {       
-        return res.status(500).json({ error: 'Error al eliminar el préstamo' });
+        return res.status(500).send({ error: 'Error al eliminar el préstamo' });
     }
+};
+
+
+
+
+// Función para sumar días hábiles a una fecha de prestamo
+function sumarDiasHabiles(fechaInicio: Date, diasParaSumar: number): Date {
+  const fecha = new Date(fechaInicio);
+  let diasSumados = 0;
+
+  while (diasSumados < (diasParaSumar+1)) { // +1 para incluir el día de inicio
+    // Avanzar un día
+    fecha.setDate(fecha.getDate() + 1);
+
+    // 0 = Domingo. Si NO es domingo, contamos el día.
+    if (fecha.getDay() !== 0) {
+      diasSumados++;
+    }
+  }
+
+  return fecha;
+}
+
+// realizar calculos de prestamo
+const calcularDetallesPrestamo = (monto: number, tPrestamo: any): any => {
+  // 1. Cálculos Financieros
+  const valorIntereses = monto * (tPrestamo.porcentaje / 100);
+ // const valorIntereses = Math.round(interesesRaw); // Redondeo seguro
+  
+  const saldoTotal = monto + valorIntereses;
+  const valorCuota = saldoTotal / tPrestamo.cantidad_cuotas;
+
+  // 2. Cálculo de Fechas
+  // Obtener fecha actual para evitar desfase de zona horaria
+  const fechaActualStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  const fechaInicio = new Date(fechaActualStr);
+  
+  const fechaFin = sumarDiasHabiles(fechaInicio, tPrestamo.cantidad_cuotas);
+  const fechaFinStr = fechaFin.toISOString().split('T')[0];
+
+  return {
+    valor_intereses: valorIntereses,
+    saldo_pendiente: saldoTotal,
+    valor_cuota: valorCuota,
+    fecha_desembolso: fechaActualStr,
+    fecha_fin_prestamo: fechaFinStr
+  };
 };
 
 export default {
   createPrestamo,
   getAllPrestamos,
   getPrestamoById,
+  getPrestamosByClienteId,
+  getPrestamosInfo,
+  getPrestamoInfoById,
+  getTotalCarteraSucursal,
+  getCapitalEnCalle,
+  getInteresesProyectados,
+  getDesglosePrestamos,
   updatePrestamo,
   deletePrestamo,
+  getPrestamoAndCobrosInfo,
+  confirmarPrestamo,
+  rechazarPrestamo,
+  PrestamosPendientes
 };

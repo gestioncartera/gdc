@@ -1,4 +1,7 @@
 import ruta from "../models/ruta";
+import  AsignacionRuta  from "../models/AsignacionRuta";
+import CajaDiaria  from "../models/CajaDiaria";
+import cliente from "../models/cliente";
 import { Request, Response } from "express";
 
 //crear una nueva ruta
@@ -18,15 +21,31 @@ const createRuta =async (req: Request, res: Response) => {
     }
 };
 
-//obtener todas las rutas
+//obtener todas las rutas de una sucursal
 const getRutas = async (req: Request, res: Response) => {
     try {
-      const rutas = await ruta.getRutas();    
+        const idSucursal = parseInt(req.params.idSucursal);
+      const rutas = await ruta.getRutas(idSucursal);    
         return  rutas.length === 0
         ? res.status(404).send({ message: 'No se encontraron rutas' })
         : res.status(200).json(rutas);
     } catch (error) {
-        return res.status(500).send({ error: 'Error al obtener las rutas' });
+        
+        return res.status(500).send({ error: 'Error al obtener la ruta' });
+    }
+};
+
+//obtener todas las rutas con cobros pendientes de una sucursal
+const getRutasCobros = async (req: Request, res: Response) => {
+    try {
+        const idSucursal = parseInt(req.params.idSucursal);
+        const rutas = await ruta.getRutasCobros(idSucursal);
+        return rutas.length === 0
+            ? res.status(404).send({ message: 'No se encontraron rutas con cobros pendientes' })
+            : res.status(200).json(rutas);
+    } catch (error) {
+          //  console.error(error);
+        return res.status(500).send({ error: 'Error al obtener las rutas con cobros pendientes' });
     }
 };
 
@@ -39,7 +58,8 @@ const getRutaById = async (req: Request, res: Response) => {
           ? res.status(404).send({ message: 'Ruta no encontrada' }) 
           : res.status(200).json(rutaEncontrada);
     } catch (error) {
-        return res.status(500).send({ error: 'Error al obtener la ruta' });
+       console.error(error);
+        return res.status(500).send({ error: 'Error al obtener las rutas' });
     }
 };
 
@@ -68,12 +88,45 @@ const deleteRuta = async (req: Request, res: Response) => {
         return res.status(500).send({ error: 'Error al eliminar la ruta' });
     }
 };
+//DESACTIVAR RUTA
+const desactivarRuta = async (req: Request, res: Response) => {
+    try {        const id = parseInt(req.params.id);
+
+        const rutaEncontrada = await ruta.getRutaById(id);
+        if (!rutaEncontrada) {
+            return res.status(404).send({ message: 'Ruta no encontrada' });
+        }
+
+        const usuarioAsignado = await AsignacionRuta.getUsuarioAsignadoRuta(id);
+        if (usuarioAsignado) {
+            const cajaAbierta = await CajaDiaria.getCajasDiariasByUsuario(usuarioAsignado.usuario_id);
+            if (cajaAbierta) {
+                return res.status(400).send({ message: 'No se puede desactivar la ruta porque el cobrador tiene una caja abierta' });
+            }
+           
+        }
+
+        const clientesEnRuta = await cliente.getClientesByRuta(id);
+        if (clientesEnRuta.length > 0) {
+            return res.status(400).send({ message: 'No se puede desactivar la ruta porque tiene clientes asignados' });
+        }
+
+        const rutaDesactivada = await ruta.desactivarRuta(id);
+          return rutaDesactivada===null
+          ? res.status(404).send({ message: 'Ruta no encontrada para desactivar' }) 
+          :  res.status(200).send({ message: 'Ruta desactivada exitosamente' });
+    } catch (error) {
+        return res.status(500).send({ error: 'Error al desactivar la ruta' });
+    }
+};
 
 
 export default{
   createRuta,
   getRutas,
   getRutaById,
+  getRutasCobros,
   updateRuta,
-    deleteRuta
+    deleteRuta,
+    desactivarRuta
 };

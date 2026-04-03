@@ -1,15 +1,36 @@
 import AsignacionRuta from "../models/AsignacionRuta";
 import { Request, Response } from "express";
+import CajaDiaria from "../models/CajaDiaria";
 
 // Crear asignación de ruta
 export const createAsignacionRuta = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const asignacionRuta = req.body;
-    const newAsignacionRuta = await AsignacionRuta.createAsignacionRuta(asignacionRuta);
-    return (!newAsignacionRuta) 
-    ? res.status(500).send({ error: 'No se pudo crear la asignación de ruta' }) 
-    : res.status(201).json(newAsignacionRuta);
+     
+    // Verificar si YA tienen exactamente esa asignación activa 
+    const existeRutaAsignada = await AsignacionRuta.isRutaAsignada(req.body.ruta_id, req.body.usuario_id);
+    if (existeRutaAsignada) {
+       // Devolver error o mensaje de que ya está lista
+      return res.status(400).send({ error: 'La ruta ya está asignada a este usuario' });
+    }
+
+    //Validar que cobrador no tenga caja abierta
+    const cajaAbierta= await  CajaDiaria.getCajasDiariasByUsuario(req.body.usuario_id);
+    if(cajaAbierta && cajaAbierta.length > 0){
+      return res.status(400).send({ error: 'El usuario tiene una caja abierta, cierre la caja antes de asignar una nueva ruta' });
+    }
+
+    //validar que ruta no tenga asociada una caja abierta
+    const cajaAbiertaRuta= await  CajaDiaria.getCajasDiariasByRuta(req.body.ruta_id);
+    if(cajaAbiertaRuta && cajaAbiertaRuta.length > 0){
+      return res.status(400).send({ error: 'La ruta tiene una caja abierta, cierre la caja antes de asignar la ruta' });
+    }
+
+    // Usar la transacción segura del modelo para limpiar conflictos y crear
+    const newAsignacionRuta = await AsignacionRuta.asignarRutaSegura(req.body);
+
+    return res.status(201).json(newAsignacionRuta);
   } catch (error) {
+    console.error(error);
     return res.status(500).send({ error: 'Error al crear la asignación de ruta' });
   }
 };
