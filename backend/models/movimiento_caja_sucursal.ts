@@ -77,12 +77,16 @@ export const getMovimientoById = async (movimiento_id: number): Promise<Movimien
 
 
 
-export const getMovimientosByCajaSucursalId = async (caja_sucursal_id: number): Promise<MovimientoCajaSucursal[]> => {
+export const getMovimientosByCajaSucursalId = async (caja_sucursal_id: number, fechaInicial: string, fechaFinal: string): Promise<MovimientoCajaSucursal[]> => {
     const result = await db.query(
         `SELECT * FROM movimientos_caja_sucursal
-        WHERE caja_sucursal_id = $1 ORDER BY fecha_movimiento DESC`,
-        [caja_sucursal_id]
+        WHERE caja_sucursal_id = $1
+        and fecha_movimiento between $2 and $3
+        ORDER BY fecha_movimiento DESC`,
+        [caja_sucursal_id, fechaInicial, fechaFinal]
     );
+    
+    
     return result.rows;
 };
 

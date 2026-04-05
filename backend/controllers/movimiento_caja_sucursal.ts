@@ -39,9 +39,16 @@ const createMovimientoCajaSucursal = async (req: Request, res: Response) => {
 const getMovimientosByCajaSucursalId = async (req: Request, res: Response) => {
     try {
         const  caja_sucursal_id  = parseInt(req.params.caja_sucursal_id);
-        const movimientos = await movtoCajaSucursal.getMovimientosByCajaSucursalId(caja_sucursal_id);
+        const fechaIncial = req.body.fechaInicial;
+        const fechaFinal = req.body.fechaFinal;
+
+         if (isNaN(caja_sucursal_id)) {
+            return res.status(400).send({ error: 'ID de caja sucursal inválido' });
+        }
+        const movimientos = await movtoCajaSucursal.getMovimientosByCajaSucursalId(caja_sucursal_id, fechaIncial , fechaFinal);
         return res.status(200).json(movimientos);
     } catch (error) {
+        
         
         return res.status(500).send({ error: 'Error interno del servidor' });
     }
