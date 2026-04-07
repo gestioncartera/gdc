@@ -23,5 +23,16 @@ const db = new Pool({
   ssl:true
 });
 
+/*
+//conexion vps
+const pool = new Pool({
+ user: process.env.PGUSER || 'appuser',
+ host: process.env.PGHOST || '127.0.0.1',
+ database: process.env.PGDATABASE || 'appdb',
+ password: process.env.PGPASSWORD, // ponla en variables de entorno (no en el código)
+ port: Number(process.env.PGPORT || 5432),
+});
+*/
+
 
 export default db;
