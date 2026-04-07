@@ -40,7 +40,7 @@ const getMovimientosByCajaSucursalId = async (req: Request, res: Response) => {
     try {
         const  caja_sucursal_id  = parseInt(req.params.caja_sucursal_id);
         const fechaIncial = req.params.fecha_inicio;
-        const fechaFinal = req.params.fecha_fin;
+        const fechaFinal = req.params.fecha_final;
 
          if (isNaN(caja_sucursal_id)) {
             return res.status(400).send({ error: 'ID de caja sucursal inválido' });
