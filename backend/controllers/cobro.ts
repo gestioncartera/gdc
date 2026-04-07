@@ -212,7 +212,8 @@ export const getPrestamoCobrosHistory = async (req: Request, res: Response): Pro
 export const getTotalCobradoHoy = async (req: Request, res: Response): Promise<Response> => {
   try {
     const sucursal_id = parseInt(req.params.sucursal_id);
-    const totalCobradoHoy = await cobro.getTotalCobradoHoy(sucursal_id, new Date().toISOString().split('T')[0]);
+    const fecha=req.params.fecha; // Obtener la fecha desde los parámetros de la ruta
+    const totalCobradoHoy = await cobro.getTotalCobradoHoy(sucursal_id, fecha);
     if (!totalCobradoHoy) {
       return res.status(404).send({ error: 'No se encontraron cobros para hoy' });
     }
@@ -227,7 +228,8 @@ export const getTotalCobradoHoy = async (req: Request, res: Response): Promise<R
 export const getCantCobrosHoy = async (req: Request, res: Response): Promise<Response> => {
   try {
     const sucursal_id = parseInt(req.params.sucursal_id);
-    const cantCobrosHoy = await cobro.getCantCobrosHoy(sucursal_id, new Date().toISOString().split('T')[0]);
+    const fecha=req.params.fecha; // Obtener la fecha desde los parámetros de la ruta
+    const cantCobrosHoy = await cobro.getCantCobrosHoy(sucursal_id, fecha);
     if (!cantCobrosHoy) {
       return res.status(404).send({ error: 'No se encontraron cobros para hoy' });
     }
@@ -350,7 +352,12 @@ const resumenCobrosCoradorRuta = async (req: Request, res: Response): Promise<Re
      return res.status(404).send({ error: 'No se encontraron rutas para la sucursal especificada' });
     }
 
-    const resultado = await cobro.resumenCobrosCoradorRuta(sucursal_id,new Date().toISOString().split('T')[0]);
+    const fecha = req.params.fecha; // Obtener la fecha desde los parámetros de la ruta
+    if (!fecha) {
+      return res.status(400).send({ error: 'La fecha es requerida para obtener el resumen de cobros' });
+    }
+
+    const resultado = await cobro.resumenCobrosCoradorRuta(sucursal_id, fecha);
 if (!resultado || resultado.length === 0) {
       return res.status(404).send({ error: 'No se encontraron cobros para la sucursal especificada' });
     }
