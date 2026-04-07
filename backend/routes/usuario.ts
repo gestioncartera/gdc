@@ -9,7 +9,7 @@ const router = express.Router();
 router.post('/login', usuario.login);
 
 //routes usuario
-router.post('/createUsuario', auth, usuario.createUsuario);
+router.post('/createUsuario',auth, usuario.createUsuario);
 router.get('/getUsuarios/:idSucursal', auth,admin, usuario.getUsuarios);
 router.get('/getUsuarioById/:id', auth, usuario.getUsuarioById);
 router.get('/getUsuarioByDNI/:dni', auth, usuario.getUsuarioByDNI);
