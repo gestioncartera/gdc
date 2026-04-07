@@ -80,7 +80,7 @@ export async function createSucursal(sucursal: Sucursal): Promise<Sucursal> {
       [
         newSucursal.sucursal_id,
         nombreRuta,
-        'Ruta inicial generada automáticamente',
+        'Ruta General',
         'General',
         new Date().toISOString(),
         'activo'
