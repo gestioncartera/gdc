@@ -25,6 +25,7 @@ export const createPrestamo = async (req: Request, res: Response): Promise<Respo
         req.body.estado_prestamo = 'en curso';
     }
 
+
     // 3. Validar tipo de préstamo
     const tipoPrestamo = await Tipoprestamo.getTipoPrestamoById(req.body.tipo_prestamo_id);
     if (!tipoPrestamo || tipoPrestamo.length === 0) {
