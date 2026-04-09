@@ -46,7 +46,7 @@ export const cajaInicialSucursal = async (sucursal_id: number): Promise<CajaSucu
     where cajas_sucursales.sucursal_id = $1 
     and ms.tipo_movimiento = 'ingreso' 
     and ms.estado_movto = 'confirmado'
-    and ms.descripcion like '%aporte%'`,
+    and UPPER(ms.descripcion) like '%APORTE%'`,
     [
     sucursal_id
 ]
