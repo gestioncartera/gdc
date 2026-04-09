@@ -52,7 +52,7 @@ export const createEgresoOperacion = async (egreso: EgresoOperacion): Promise<Eg
       [
         egreso.usuario_id,
         egreso.ruta_id,
-        egreso.fecha_gasto || new Date(),
+        egreso.fecha_gasto || new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', ''),
         egreso.concepto,
         egreso.monto,
         egreso.descripcion || '',
@@ -135,7 +135,7 @@ export const updateEgresoOperacion = async (egreso_id: number, egreso: EgresoOpe
     [
       egreso.usuario_id,
       egreso.ruta_id,
-      egreso.fecha_gasto,
+      egreso.fecha_gasto||new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', ''),
       egreso.concepto,
       egreso.monto,
       egreso.descripcion,
@@ -164,6 +164,7 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
         RETURNING 
           eo.monto, 
           eo.concepto,
+          eo.fecha_gasto,
           (SELECT sucursal_id FROM usuarios WHERE usuario_id = $1) as sucursal_id
       ),
       total_egresos AS (
@@ -180,7 +181,8 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
           monto, 
           descripcion,
           caja_sucursal_id,
-          estado_movto
+          estado_movto,
+          fecha_movimiento
         )
         SELECT 
           $1,
@@ -188,18 +190,19 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
           monto,
           COALESCE(concepto, 'Egreso de operación'),
           sucursal_id,
-          'confirmado'
+          'confirmado',
+          fecha_gasto
         FROM updated_egresos
         RETURNING 1
       )
       UPDATE cajas_sucursales cs
       SET saldo_actual = COALESCE(cs.saldo_actual, 0) - te.total,
-      fecha_ultima_actualizacion = NOW()
+      fecha_ultima_actualizacion = $3
 
       FROM total_egresos te
       WHERE cs.sucursal_id = te.sucursal_id
       RETURNING (SELECT json_agg(ue.*) FROM updated_egresos ue) as egresos_actualizados`,
-      [usuario_id, ruta_id]
+      [usuario_id, ruta_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
     );
 
     await client.query('COMMIT');

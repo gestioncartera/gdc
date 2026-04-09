@@ -53,19 +53,19 @@ export const abrirCajaDiaria = async (caja: CajaDiaria, sucursal_id: number): Pr
         'egreso',
         $3,
         'Apertura de caja diaria',
-        NOW(),
+        $4,
         'confirmado'
       )`,
-      [sucursal_id, caja.usuario_id, caja.monto_base_inicial]
+      [sucursal_id, caja.usuario_id, caja.monto_base_inicial,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
     );
 
     // 2. Descontar el monto inicial de la Caja Sucursal
     await client.query(
       `UPDATE cajas_sucursales 
        SET saldo_actual = saldo_actual - $1, 
-           fecha_ultima_actualizacion = NOW()
+           fecha_ultima_actualizacion = $3
        WHERE sucursal_id = $2`,
-      [caja.monto_base_inicial, sucursal_id]
+      [caja.monto_base_inicial, sucursal_id, new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
     );
 
     // 3. Crear el registro en Caja Diaria
@@ -77,21 +77,22 @@ export const abrirCajaDiaria = async (caja: CajaDiaria, sucursal_id: number): Pr
         monto_base_inicial, 
         monto_final_esperado,
         estado,
-        created_at,
         monto_recaudo,
         diferencia,
-        monto_final_real
-      ) VALUES ($1, $2, $3, $4, $5, $6,NOW(),$7,$8,$9) RETURNING *`,
+        monto_final_real,
+        created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6,$7,$8,$9,$10) RETURNING *`,
       [
         caja.usuario_id,
         caja.ruta_id,
-        caja.fecha_apertura || new Date().toISOString(),
+        caja.fecha_apertura || new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', ''),
         caja.monto_base_inicial,
          caja.monto_base_inicial || 0, // El monto_final_esperado inicia igual al monto_base_inicial
         'abierta',
         0, // monto_recaudo inicia en 0
         0, // diferencia inicia en 0
-        0  // monto_final_real inicia en 0
+        0,  // monto_final_real inicia en 0
+        new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')
       ]
     );
 
@@ -236,10 +237,10 @@ export const updateBase = async (caja_diaria_id: number, nuevoMontoBase: number)
         'egreso',
         $3,
         'Aumento de caja diaria',
-        NOW(),
+        $4,
         'confirmado'
       ) RETURNING *`,
-      [cajaUpdate.rows[0].sucursal_id, sucursal_id.rows[0].usuario_id, nuevoMontoBase]
+      [cajaUpdate.rows[0].sucursal_id, sucursal_id.rows[0].usuario_id, nuevoMontoBase,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
     );
 
     if (movtoCaja.rowCount === 0) {
@@ -289,12 +290,12 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
     // Actualizar la caja diaria
     const result = await client.query(
       `UPDATE cajas_diarias
-      SET fecha_cierre = NOW(), 
+      SET fecha_cierre = $3, 
       monto_final_real = $1, 
       diferencia = $2,
        estado = 'cerrada'
       WHERE caja_diaria_id = $3 RETURNING *`,
-      [monto_final_real, diferencia, caja_diaria_id]
+      [monto_final_real, diferencia, caja_diaria_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
     );
 
     //registar el movimiento en la caja sucursal
@@ -321,8 +322,8 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
     result.rows[0].monto_recaudo || 0,    // $2
     sucursal_id.rows[0].sucursal_id,                          // $3
     'ingreso',                             // $4
-    'recaudos Cobros ' + new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), // $5
-    new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) // $6
+    'recaudos Cobros ' + new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', ''), // $5
+   new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '') // $6
   ]
 );
       if (movto.rowCount === 0) {
@@ -334,7 +335,7 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
           SET saldo_actual = saldo_actual + $1,
               fecha_ultima_actualizacion = $3
           WHERE sucursal_id = $2`,
-        [result.rows[0].monto_recaudo || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })]
+        [result.rows[0].monto_recaudo || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
       );
 }
 
@@ -358,14 +359,14 @@ if (sobranteBase > 0) {
     $4, 
     $5, 
     $6,
-    'confirmado') RETURNING *`,
+    'confirmado') RETURNING *`, 
   [
     result.rows[0].usuario_id,           // $1
     sobranteBase || 0,    // $2
     sucursal_id.rows[0].sucursal_id,                          // $3
     'ingreso',                             // $4
-    'Sobrante Base Caja Diaria del ' + new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }), // $5
-    new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) // $6
+    'Sobrante Base Caja Diaria del ' + new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', ''), // $5
+    new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '') // $6
   ]
 );
       if (movto.rowCount === 0) {
@@ -377,7 +378,7 @@ if (sobranteBase > 0) {
           SET saldo_actual = saldo_actual + $1,
               fecha_ultima_actualizacion = $3
           WHERE sucursal_id = $2`,
-        [sobranteBase || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })]
+        [sobranteBase || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
       );
 
 
