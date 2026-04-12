@@ -188,6 +188,7 @@ export const cerrarCajaDiaria = async (req: Request, res: Response): Promise<Res
 
     const egresosCaja = await EgresoOperacion.getSumEgresosOperacionConfirmados(cajaDiaria.usuario_id, cajaDiaria.ruta_id, cajaDiaria.fecha_apertura);
     
+    
     const CajaDiariaCerrada = await CajaDiaria.cerrarCajaDiaria(caja_diaria_id, req.body.monto_final_real,egresosCaja);
     if (!CajaDiariaCerrada) {
       return res.status(404).json({ error: 'Caja diaria no cerrada' });

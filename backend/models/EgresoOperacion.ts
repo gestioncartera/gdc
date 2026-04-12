@@ -26,7 +26,7 @@ export const createEgresoOperacion = async (egreso: EgresoOperacion): Promise<Eg
     const resCaja = await client.query(
       `SELECT caja_diaria_id, monto_final_esperado 
        FROM cajas_diarias 
-       WHERE usuario_id = $1 AND estado = 'abierta' 
+       WHERE usuario_id = $1 AND upper(estado) = 'ABIERTA' 
        FOR UPDATE`, 
       [egreso.usuario_id]
     );

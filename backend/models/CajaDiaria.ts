@@ -311,16 +311,15 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
     // Actualizar la caja diaria
     const result = await client.query(
       `UPDATE cajas_diarias
-      SET fecha_cierre = $3, 
+      SET fecha_cierre = $4, 
       monto_final_real = $1, 
       diferencia = $2,
        estado = 'cerrada'
       WHERE caja_diaria_id = $3 RETURNING *`,
-      [monto_final_real, diferencia, caja_diaria_id
-      ,new Date().toLocaleString('en-CA', { 
-      timeZone: 'America/Mexico_City', 
-      hour12: false 
-      }).replace(',', '')
+      [monto_final_real,
+       diferencia, 
+       caja_diaria_id,
+      new Date().toLocaleString('en-CA', {  timeZone: 'America/Mexico_City',  hour12: false    }).replace(',', '')
   ]
     );
 
