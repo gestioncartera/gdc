@@ -409,7 +409,7 @@ if (sobranteBase > 0) {
           SET saldo_actual = saldo_actual + $1,
               fecha_ultima_actualizacion = $3
           WHERE sucursal_id = $2`,
-        [sobranteBase || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City', hour12: false }).replace(',', '')]
+        [result.rows[0].monto_base_inicial || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City', hour12: false }).replace(',', '')]
       );
 
 
