@@ -18,7 +18,10 @@ export const createCajaSucursal = async (caja: CajaSucursal): Promise<CajaSucurs
     [
     caja.sucursal_id, 
     caja.saldo_actual, 
-    caja.fecha_ultima_actualizacion || new Date().toISOString().slice(0, 10)
+    caja.fecha_ultima_actualizacion || new Date().toLocaleString('en-CA', { 
+    timeZone: 'America/Mexico_City', 
+    hour12: false 
+}).replace(',', '')
 ]
   );
   return result.rows[0];
@@ -46,7 +49,7 @@ export const cajaInicialSucursal = async (sucursal_id: number): Promise<CajaSucu
     where cajas_sucursales.sucursal_id = $1 
     and ms.tipo_movimiento = 'ingreso' 
     and ms.estado_movto = 'confirmado'
-    and ms.descripcion like '%aporte%'`,
+    and UPPER(ms.descripcion) like '%APORTE%'`,
     [
     sucursal_id
 ]

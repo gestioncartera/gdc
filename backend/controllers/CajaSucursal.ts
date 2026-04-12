@@ -51,7 +51,7 @@ export const cajaInicialSucursal = async (req: Request, res: Response): Promise<
     }
     return res.status(200).json(saldoInicial);
   } catch (error) {
-    console.log(error);
+    //console.log(error);
     
     return res.status(500).send({ message: "Error al obtener el saldo inicial de la caja de sucursal" });
   }

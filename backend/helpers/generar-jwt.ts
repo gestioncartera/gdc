@@ -10,7 +10,7 @@ export const generarJWT = (usuario: Usuario) => {
         };
 
         jwt.sign(payload, process.env.SK_JWT || '', {
-            expiresIn: '4h'
+            expiresIn: '1h'
         }, (err, token) => {
             if (err) {
                 console.log(err);

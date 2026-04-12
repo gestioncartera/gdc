@@ -27,9 +27,9 @@ export async function createCliente(cliente: Cliente): Promise<Cliente|null> {
       cliente.numero_identificacion || null,
       cliente.telefono || null,
       cliente.direccion,
-      cliente.fecha_registro || new Date().toISOString(),
+      cliente.fecha_registro || new Date().toLocaleString('en-CA', {    timeZone: 'America/Mexico_City',    hour12: false }).replace(',', ''),
       cliente.estado || 'activo',
-      cliente.created_at || new Date().toISOString(),
+      cliente.created_at || new Date().toLocaleString('en-CA', {    timeZone: 'America/Mexico_City',    hour12: false }).replace(',', ''),
       cliente.id_ruta 
     ]
   );

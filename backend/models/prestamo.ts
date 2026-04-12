@@ -134,6 +134,8 @@ const client = await db.connect();
       [prestamo.sucursal_id]
     );
 
+    
+    
     if (cajaSurcursal.rows.length === 0) {
       throw new Error('No se encontró una caja  para la sucursal.');
     }
@@ -145,17 +147,20 @@ const client = await db.connect();
     const UpdateCaja = await client.query(
       `UPDATE cajas_sucursales
        SET saldo_actual = saldo_actual - $1
-       WHERE caja_sucursal_id = $2`,
+       WHERE caja_sucursal_id = $2 returning *`,
       [prestamo.monto_prestamo, cajaSurcursal.rows[0].caja_sucursal_id]
     );
+
+    
 
     if(UpdateCaja.rowCount === 0){
       throw new Error('Error al actualizar saldo en caja sucursal.');
     }
 
+
   const movtoCaja = await client.query(
     `INSERT INTO movimientos_caja_sucursal (
-      sucursal_id,
+      caja_sucursal_id,
       tipo_movimiento,
       monto,
       descripcion,
@@ -171,7 +176,7 @@ const client = await db.connect();
           ($6),
           ($7)
       ) RETURNING *`,
-      [prestamo.sucursal_id,
+      [cajaSurcursal.rows[0].sucursal_id,
         'egreso',
         prestamo.monto_prestamo,
         'Desembolso Préstamo por administrador',
@@ -180,6 +185,7 @@ const client = await db.connect();
           new Date()
         ]
     );
+
 
     if(movtoCaja.rows.length === 0){
       throw new Error('Error al registrar movimiento en caja sucursal.');

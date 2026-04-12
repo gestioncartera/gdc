@@ -35,6 +35,8 @@ const abrirCajaDiaria = async (req: Request, res: Response): Promise<Response> =
     ? res.status(400).send({ error: 'No se pudo crear la caja diaria' }) 
     : res.status(201).json(newCajaDiaria);
   } catch (error) {
+    console.log(error);
+    
     return res.status(500).send({ error: 'Error al crear la caja diaria' });
   }
 };
@@ -185,6 +187,7 @@ export const cerrarCajaDiaria = async (req: Request, res: Response): Promise<Res
     }
 
     const egresosCaja = await EgresoOperacion.getSumEgresosOperacionConfirmados(cajaDiaria.usuario_id, cajaDiaria.ruta_id, cajaDiaria.fecha_apertura);
+    
     
     const CajaDiariaCerrada = await CajaDiaria.cerrarCajaDiaria(caja_diaria_id, req.body.monto_final_real,egresosCaja);
     if (!CajaDiariaCerrada) {

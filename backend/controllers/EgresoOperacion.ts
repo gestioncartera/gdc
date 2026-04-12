@@ -27,6 +27,7 @@ export const createEgresoOperacion = async (req: Request, res: Response): Promis
      if (esErrorNegocio) {
       return res.status(400).json({ error: error.message });
     }
+//console.log(error);
 
     return res.status(500).send({ error: 'Error interno del servidor'  });
   }
@@ -125,7 +126,7 @@ export const confirmarEgresosOperacion = async (req: Request, res: Response): Pr
 export const getEgresosOperacionCobrador = async (req: Request, res: Response): Promise<Response> => {
   try {
     const usuario_id = parseInt(req.params.usuario_id);
-    const fecha_apertura = new Date().toISOString().split('T')[0];
+    const fecha_apertura = new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City',hour12: false }).replace(',', '');
     const egresosOperacion = await EgresoOperacion.getEgresosOperacionCobrador(usuario_id, fecha_apertura);
     if (!egresosOperacion || egresosOperacion.length === 0) {
       return res.status(404).send({ error: 'No se encontraron egresos de operación' });
