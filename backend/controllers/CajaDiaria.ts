@@ -35,6 +35,8 @@ const abrirCajaDiaria = async (req: Request, res: Response): Promise<Response> =
     ? res.status(400).send({ error: 'No se pudo crear la caja diaria' }) 
     : res.status(201).json(newCajaDiaria);
   } catch (error) {
+    console.log(error);
+    
     return res.status(500).send({ error: 'Error al crear la caja diaria' });
   }
 };

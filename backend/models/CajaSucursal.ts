@@ -18,7 +18,10 @@ export const createCajaSucursal = async (caja: CajaSucursal): Promise<CajaSucurs
     [
     caja.sucursal_id, 
     caja.saldo_actual, 
-    caja.fecha_ultima_actualizacion || new Date().toISOString().slice(0, 10)
+    caja.fecha_ultima_actualizacion || new Date().toLocaleString('en-CA', { 
+    timeZone: 'America/Mexico_City', 
+    hour12: false 
+}).replace(',', '')
 ]
   );
   return result.rows[0];

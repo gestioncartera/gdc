@@ -36,6 +36,10 @@ export const abrirCajaDiaria = async (caja: CajaDiaria, sucursal_id: number): Pr
     if (saldoActual < caja.monto_base_inicial) {
          throw new Error('Fondos insuficientes en la caja principal de la sucursal');
     }
+console.log(new Date().toLocaleString('en-CA', { 
+    timeZone: 'America/Mexico_City', 
+    hour12: false 
+}).replace(',', ''));
 
      //  Registrar también el egreso en 'movimientos_caja_sucursal' para auditoría
     await client.query(
@@ -56,7 +60,10 @@ export const abrirCajaDiaria = async (caja: CajaDiaria, sucursal_id: number): Pr
         $4,
         'confirmado'
       )`,
-      [sucursal_id, caja.usuario_id, caja.monto_base_inicial,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
+      [sucursal_id, caja.usuario_id, caja.monto_base_inicial,new Date().toLocaleString('en-CA', { 
+    timeZone: 'America/Mexico_City', 
+    hour12: false 
+}).replace(',', '')]
     );
 
     // 2. Descontar el monto inicial de la Caja Sucursal
@@ -65,7 +72,11 @@ export const abrirCajaDiaria = async (caja: CajaDiaria, sucursal_id: number): Pr
        SET saldo_actual = saldo_actual - $1, 
            fecha_ultima_actualizacion = $3
        WHERE sucursal_id = $2`,
-      [caja.monto_base_inicial, sucursal_id, new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
+      [caja.monto_base_inicial, sucursal_id, 
+        new Date().toLocaleString('en-CA', { 
+    timeZone: 'America/Mexico_City', 
+    hour12: false 
+}).replace(',', '')]
     );
 
     // 3. Crear el registro en Caja Diaria
@@ -85,14 +96,20 @@ export const abrirCajaDiaria = async (caja: CajaDiaria, sucursal_id: number): Pr
       [
         caja.usuario_id,
         caja.ruta_id,
-        caja.fecha_apertura || new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', ''),
+        caja.fecha_apertura || new Date().toLocaleString('en-CA', { 
+    timeZone: 'America/Mexico_City', 
+    hour12: false 
+}).replace(',', ''),
         caja.monto_base_inicial,
          caja.monto_base_inicial || 0, // El monto_final_esperado inicia igual al monto_base_inicial
         'abierta',
         0, // monto_recaudo inicia en 0
         0, // diferencia inicia en 0
         0,  // monto_final_real inicia en 0
-        new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')
+        new Date().toLocaleString('en-CA', { 
+    timeZone: 'America/Mexico_City', 
+    hour12: false 
+}).replace(',', '')
       ]
     );
 
@@ -240,7 +257,11 @@ export const updateBase = async (caja_diaria_id: number, nuevoMontoBase: number)
         $4,
         'confirmado'
       ) RETURNING *`,
-      [cajaUpdate.rows[0].sucursal_id, sucursal_id.rows[0].usuario_id, nuevoMontoBase,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
+      [cajaUpdate.rows[0].sucursal_id, sucursal_id.rows[0].usuario_id, nuevoMontoBase
+      ,new Date().toLocaleString('en-CA', { 
+    timeZone: 'America/Mexico_City', 
+    hour12: false 
+}).replace(',', '')]
     );
 
     if (movtoCaja.rowCount === 0) {
@@ -295,7 +316,12 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
       diferencia = $2,
        estado = 'cerrada'
       WHERE caja_diaria_id = $3 RETURNING *`,
-      [monto_final_real, diferencia, caja_diaria_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
+      [monto_final_real, diferencia, caja_diaria_id
+      ,new Date().toLocaleString('en-CA', { 
+      timeZone: 'America/Mexico_City', 
+      hour12: false 
+      }).replace(',', '')
+  ]
     );
 
     //registar el movimiento en la caja sucursal
@@ -322,8 +348,14 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
     result.rows[0].monto_recaudo || 0,    // $2
     sucursal_id.rows[0].sucursal_id,                          // $3
     'ingreso',                             // $4
-    'recaudos Cobros ' + new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', ''), // $5
-   new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '') // $6
+    'recaudos Cobros ' + new Date().toLocaleString('en-CA', { 
+    timeZone: 'America/Mexico_City', 
+    hour12: false 
+    }).replace(',', ''), // $5
+   new Date().toLocaleString('en-CA', { 
+    timeZone: 'America/Mexico_City', 
+    hour12: false 
+  }).replace(',', '') // $6
   ]
 );
       if (movto.rowCount === 0) {
@@ -335,7 +367,7 @@ export const cerrarCajaDiaria = async (caja_diaria_id: number, monto_final_real:
           SET saldo_actual = saldo_actual + $1,
               fecha_ultima_actualizacion = $3
           WHERE sucursal_id = $2`,
-        [result.rows[0].monto_recaudo || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
+        [result.rows[0].monto_recaudo || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City', hour12: false }).replace(',', '')]
       );
 }
 
@@ -366,7 +398,7 @@ if (sobranteBase > 0) {
     sucursal_id.rows[0].sucursal_id,                          // $3
     'ingreso',                             // $4
     'Sobrante Base Caja Diaria del ' + new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', ''), // $5
-    new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '') // $6
+    new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City',hour12: false }).replace(',', '') // $6
   ]
 );
       if (movto.rowCount === 0) {
@@ -378,7 +410,7 @@ if (sobranteBase > 0) {
           SET saldo_actual = saldo_actual + $1,
               fecha_ultima_actualizacion = $3
           WHERE sucursal_id = $2`,
-        [sobranteBase || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
+        [sobranteBase || 0, sucursal_id.rows[0].sucursal_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City', hour12: false }).replace(',', '')]
       );
 
 

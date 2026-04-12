@@ -52,7 +52,7 @@ export const createEgresoOperacion = async (egreso: EgresoOperacion): Promise<Eg
       [
         egreso.usuario_id,
         egreso.ruta_id,
-        egreso.fecha_gasto || new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', ''),
+        egreso.fecha_gasto || new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City', hour12: false }).replace(',', ''),
         egreso.concepto,
         egreso.monto,
         egreso.descripcion || '',
@@ -94,7 +94,7 @@ export const getAllEgresosOperacionPendientes = async (usuario_id: number,ruta_i
 export const getSumEgresosOperacion = async (usuario_id: number,ruta_id: number,fecha_apertura: Date): Promise<number> => {
   const result = await db.query(`SELECT SUM(monto) as total_egresos
     FROM egresos_operacion
-    WHERE  usuario_id = $1 AND ruta_id = $2 AND date(fecha_gasto) = date($3) and estado_egreso <> 'rechazado'`,
+    WHERE  usuario_id = $1 AND ruta_id = $2 AND date(fecha_gasto) = date($3) and upper(estado_egreso) <> 'RECHAZADO'`,
     [usuario_id,
     ruta_id,
     fecha_apertura]);
@@ -135,7 +135,7 @@ export const updateEgresoOperacion = async (egreso_id: number, egreso: EgresoOpe
     [
       egreso.usuario_id,
       egreso.ruta_id,
-      egreso.fecha_gasto||new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', ''),
+      egreso.fecha_gasto||new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City', hour12: false }).replace(',', ''),
       egreso.concepto,
       egreso.monto,
       egreso.descripcion,
@@ -202,7 +202,7 @@ const confirmarEgresosOperacion = async (usuario_id: number, ruta_id: number): P
       FROM total_egresos te
       WHERE cs.sucursal_id = te.sucursal_id
       RETURNING (SELECT json_agg(ue.*) FROM updated_egresos ue) as egresos_actualizados`,
-      [usuario_id, ruta_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City' }).replace(',', '')]
+      [usuario_id, ruta_id,new Date().toLocaleString('en-CA', { timeZone: 'America/Mexico_City', hour12: false }).replace(',', '')]
     );
 
     await client.query('COMMIT');
