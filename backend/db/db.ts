@@ -12,7 +12,7 @@ const db = new Pool({
 });
 */
 
-/*
+///*
 // Configuración de la conexión a la base de datos PostgreSQL en Neon
 const db = new Pool({
  // host: 'ep-wandering-dust-a41qklky-pooler.us-east-1.aws.neon.tech', //GDC
@@ -24,10 +24,10 @@ const db = new Pool({
   password: 'npg_6MaBubGgs2UA', //GDCWEB
   ssl:true
 });
-*/
+// */
 
 
- // /*
+  /*
 //conexion vps
 const db = new Pool({
  user: process.env.PGUSER || 'appuser',
